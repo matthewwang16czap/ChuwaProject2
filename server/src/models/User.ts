@@ -12,6 +12,9 @@ interface IUser extends Document {
   verifyPassword(plainPassword: string): Promise<boolean>; // Password verification method
 }
 
+// Define the password pattern (minimum 8 characters, at least 1 letter and 1 number)
+const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+
 // Define the User schema
 const UserSchema: Schema<IUser> = new Schema({
   username: { type: String, required: true, unique: true }, // Unique username
@@ -20,11 +23,20 @@ const UserSchema: Schema<IUser> = new Schema({
   password: { type: String, required: true }, // Store hashed password
 });
 
-// Pre-save middleware to hash the password before saving
+// Pre-save middleware to validate and hash the password before saving
 UserSchema.pre<IUser>("save", async function (next): Promise<void> {
   // If password has not been modified, skip hashing
   if (!this.isModified("password")) {
     return next();
+  }
+
+  // Validate the plain password before hashing
+  if (!passwordPattern.test(this.password)) {
+    return next(
+      new Error(
+        "Password must be at least 8 characters long and contain at least one number and one alphabetic character."
+      )
+    );
   }
 
   try {
@@ -33,7 +45,6 @@ UserSchema.pre<IUser>("save", async function (next): Promise<void> {
     this.password = hashedPassword; // Replace the plain password with the hashed one
     next(); // Move to the next middleware or save the document
   } catch (error) {
-    // Type-check the error and pass it to the next middleware
     if (error instanceof Error) {
       next(error); // Pass the error to the next middleware
     } else {

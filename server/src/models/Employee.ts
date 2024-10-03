@@ -1,33 +1,35 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+// Define the Employee interface
 interface IEmployee extends Document {
-  applicationId: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
+  applicationId?: mongoose.Types.ObjectId;
   firstName: string;
   lastName: string;
   middleName?: string;
   preferredName?: string;
   profilePictureUrl?: string;
   email: string;
-  ssn: string;
-  dateOfBirth: Date;
-  gender: 'Male' | 'Female' | 'Other';
-  address: {
+  ssn?: string;
+  dateOfBirth?: Date;
+  gender?: 'Male' | 'Female' | 'Other';
+  address?: {
     building: string;
     street: string;
     city: string;
     state: string;
     zip: string;
   };
-  contactInfo: {
+  contactInfo?: {
     cellPhone: string;
     workPhone?: string;
   };
-  employment: {
+  employment?: {
     visaTitle: string;
     startDate: Date;
     endDate?: Date;
   };
-  emergencyContact: {
+  emergencyContact?: {
     firstName: string;
     lastName: string;
     middleName?: string;
@@ -35,59 +37,66 @@ interface IEmployee extends Document {
     email: string;
     relationship: string;
   };
-  documents: {
+  documents?: {
     name: string;
     url: string;
   }[];
 }
 
+// Define the Employee schema
 const EmployeeSchema: Schema = new Schema({
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User', 
+    required: true, 
+  },
   applicationId: {
     type: Schema.Types.ObjectId,
     ref: 'Application', 
-    required: true, 
+    default: null, 
   },
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
-  middleName: { type: String },
-  preferredName: { type: String },
-  profilePictureUrl: { type: String }, // URL for the profile picture
+  firstName: { type: String, default: '' },
+  lastName: { type: String, default: '' },
+  middleName: { type: String, default: '' },
+  preferredName: { type: String, default: '' },
+  profilePictureUrl: { type: String, default: '' }, // URL for the profile picture
   email: { type: String, required: true, unique: true },
-  ssn: { type: String, required: true },
-  dateOfBirth: { type: Date, required: true },
-  gender: { type: String, enum: ['Male', 'Female', 'Other'], required: true },
+  ssn: { type: String, default: '' },
+  dateOfBirth: { type: Date, default: null },
+  gender: { type: String, enum: ['Male', 'Female', 'Other'], default: 'Other' },
   address: {
-    building: { type: String, required: true },
-    street: { type: String, required: true },
-    city: { type: String, required: true },
-    state: { type: String, required: true },
-    zip: { type: String, required: true }
+    building: { type: String, default: '' },
+    street: { type: String, default: '' },
+    city: { type: String, default: '' },
+    state: { type: String, default: '' },
+    zip: { type: String, default: '' }
   },
   contactInfo: {
-    cellPhone: { type: String, required: true },
-    workPhone: { type: String }
+    cellPhone: { type: String, default: '' },
+    workPhone: { type: String, default: '' }
   },
   employment: {
-    visaTitle: { type: String, required: true },
-    startDate: { type: Date, required: true },
-    endDate: { type: Date }
+    visaTitle: { type: String, default: '' },
+    startDate: { type: Date, default: null },
+    endDate: { type: Date, default: null }
   },
   emergencyContact: {
-    firstName: { type: String, required: true },
-    lastName: { type: String, required: true },
-    middleName: { type: String },
-    phone: { type: String, required: true },
-    email: { type: String, required: true },
-    relationship: { type: String, required: true }
+    firstName: { type: String, default: '' },
+    lastName: { type: String, default: '' },
+    middleName: { type: String, default: '' },
+    phone: { type: String, default: '' },
+    email: { type: String, default: '' },
+    relationship: { type: String, default: '' }
   },
   documents: [
     {
-      name: { type: String, required: true },
-      url: { type: String, required: true } // URL where the document is stored
+      name: { type: String, default: '' },
+      url: { type: String, default: '' }
     }
   ]
 });
 
+// Create and export the Employee model
 const Employee = mongoose.model<IEmployee>('Employee', EmployeeSchema);
 
 export default Employee;

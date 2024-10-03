@@ -21,8 +21,10 @@
   },
   "dependencies": {
     "@types/express-validator": "^2.20.33",
+    "@types/jsonwebtoken": "^9.0.7",
     "bcrypt": "^5.1.1",
     "dotenv": "^16.4.5",
-    "express-validator": "^7.2.0"
+    "express-validator": "^7.2.0",
+    "jsonwebtoken": "^9.0.2"
   }
 }
