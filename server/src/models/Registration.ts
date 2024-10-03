@@ -37,7 +37,7 @@ const RegistrationSchema: Schema<IRegistration> = new Schema({
   userId: {
     type: Schema.Types.ObjectId,
     ref: 'User', 
-    required: true, 
+    default: null, 
   },
 });
 

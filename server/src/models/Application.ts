@@ -23,20 +23,20 @@ interface IApplication extends Document {
   middleName?: string;
   preferredName?: string;
   profilePictureUrl?: string;
-  address: {
+  address?: {
     building: string;
     street: string;
     city: string;
     state: string;
     zip: string;
   };
-  cellPhone: string;
+  cellPhone?: string;
   workPhone?: string;
   email: string; // Pre-filled, not editable
-  ssn: string;
-  dateOfBirth: Date;
-  gender: 'Male' | 'Female' | 'Other';
-  citizenship: 'Green Card' | 'Citizen' | 'Work Authorization';
+  ssn?: string;
+  dateOfBirth?: Date;
+  gender?: 'Male' | 'Female' | 'Other';
+  citizenship?: 'Green Card' | 'Citizen' | 'Work Authorization';
   workAuthorization?: IWorkAuthorization; // Updated field
   references?: {
     firstName: string;
@@ -46,7 +46,7 @@ interface IApplication extends Document {
     email: string;
     relationship: string;
   };
-  emergencyContacts: {
+  emergencyContacts?: {
     firstName: string;
     lastName: string;
     middleName?: string;
@@ -54,7 +54,7 @@ interface IApplication extends Document {
     email: string;
     relationship: string;
   }[];
-  documents: {
+  documents?: {
     profilePictureUrl?: string;
     driversLicenseUrl?: string;
   };
@@ -69,63 +69,63 @@ const ApplicationSchema: Schema = new Schema({
     ref: 'Employee', // Reference to the Employee schema
     required: true, // Employee ID must be provided
   },
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
-  middleName: { type: String },
-  preferredName: { type: String },
-  profilePictureUrl: { type: String },
+  firstName: { type: String, default: '' },
+  lastName: { type: String, default: '' },
+  middleName: { type: String, default: '' },
+  preferredName: { type: String, default: '' },
+  profilePictureUrl: { type: String, default: '' },
   address: {
-    building: { type: String, required: true },
-    street: { type: String, required: true },
-    city: { type: String, required: true },
-    state: { type: String, required: true },
-    zip: { type: String, required: true }
+    building: { type: String, default: '' },
+    street: { type: String, default: '' },
+    city: { type: String, default: '' },
+    state: { type: String, default: '' },
+    zip: { type: String, default: '' }
   },
-  cellPhone: { type: String, required: true },
-  workPhone: { type: String },
+  cellPhone: { type: String, default: '' },
+  workPhone: { type: String, default: '' },
   email: { type: String, required: true, unique: true }, // Pre-filled, not editable
-  ssn: { type: String, required: true },
-  dateOfBirth: { type: Date, required: true },
-  gender: { type: String, enum: ['Male', 'Female', 'Other'], required: true },
-  citizenship: { type: String, enum: ['Green Card', 'Citizen', 'Work Authorization'], required: true },
+  ssn: { type: String, default: '' },
+  dateOfBirth: { type: Date, default: null },
+  gender: { type: String, enum: ['Male', 'Female', 'Other'], default: 'Other' },
+  citizenship: { type: String, enum: ['Green Card', 'Citizen', 'Work Authorization'], default: 'Work Authorization' },
   workAuthorization: {
-    visaType: { type: String, enum: ['H1-B', 'L2', 'F1(CPT/OPT)', 'H4', 'Other'], required: true },
-    visaTitle: { type: String }, // Only filled if visaType is 'Other'
-    startDate: { type: Date, required: true },
-    endDate: { type: Date },
+    visaType: { type: String, enum: ['H1-B', 'L2', 'F1(CPT/OPT)', 'H4', 'Other'], default: 'Other' },
+    visaTitle: { type: String, default: '' }, // Only filled if visaType is 'Other'
+    startDate: { type: Date, default: null },
+    endDate: { type: Date, default: null },
     documents: [
       {
-        name: { type: String, required: true, enum: ["OPT Receipt", "I-983", "I-20"] },
-        url: { type: String },
+        name: { type: String, default: 'OPT Receipt', enum: ["OPT Receipt", "I-983", "I-20"] },
+        url: { type: String, default: '' },
         status: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' },
-        feedback: { type: String } // Feedback if rejected
+        feedback: { type: String, default: '' } // Feedback if rejected
       }
     ]
   },
   references: {
-    firstName: { type: String, required: true },
-    lastName: { type: String, required: true },
-    middleName: { type: String },
-    phone: { type: String, required: true },
-    email: { type: String, required: true },
-    relationship: { type: String, required: true }
+    firstName: { type: String, default: '' },
+    lastName: { type: String, default: '' },
+    middleName: { type: String, default: '' },
+    phone: { type: String, default: '' },
+    email: { type: String, default: '' },
+    relationship: { type: String, default: '' }
   },
   emergencyContacts: [
     {
-      firstName: { type: String, required: true },
-      lastName: { type: String, required: true },
-      middleName: { type: String },
-      phone: { type: String, required: true },
-      email: { type: String, required: true },
-      relationship: { type: String, required: true }
+      firstName: { type: String, default: '' },
+      lastName: { type: String, default: '' },
+      middleName: { type: String, default: '' },
+      phone: { type: String, default: '' },
+      email: { type: String, default: '' },
+      relationship: { type: String, default: '' }
     }
   ],
   documents: {
-    profilePictureUrl: { type: String },
-    driversLicenseUrl: { type: String },
+    profilePictureUrl: { type: String, default: '' },
+    driversLicenseUrl: { type: String, default: '' },
   },
   status: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' },
-  feedback: { type: String } // Only filled if rejected
+  feedback: { type: String, default: '' } // Only filled if rejected
 });
 
 // Step 3: Create the model
