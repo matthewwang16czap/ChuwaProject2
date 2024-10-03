@@ -5,9 +5,10 @@ import { SubmitHandler } from 'react-hook-form';
 import { message } from 'antd';
 
 const fields: FieldType[] = [
-    { name: 'firstName', label: 'First Name', type: 'input', required: true },
-    { name: 'lastName', label: 'Last Name', type: 'input', required: true },
+    { name: 'firstName', label: 'First Name', type: 'input', required: true, validation: { required: 'First name is required' } },
+    { name: 'lastName', label: 'Last Name', type: 'input', required: true, validation: { required: 'Last name is required' } },
 ];
+
 
 const MyPage: React.FC = () => {
     const onSubmit: SubmitHandler<any> = (data) => {

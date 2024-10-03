@@ -33,9 +33,9 @@ function App() {
       <div>
         <MyPage/>
       </div>
-      {/* <div>
+      <div>
         <MySecondPage/>
-      </div> */}
+      </div>
     </>
   )
 }

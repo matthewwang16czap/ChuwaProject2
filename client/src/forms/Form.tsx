@@ -1,6 +1,6 @@
 import React from 'react';
-import { useForm, SubmitHandler } from 'react-hook-form';
-import { Form as AntForm, Input, Button, Select, Radio, DatePicker, Upload } from 'antd';
+import { useForm, Controller, SubmitHandler } from 'react-hook-form';
+import { Input, Button, Select, Radio, DatePicker, Upload, Form as AntdForm } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { FieldType } from './types';
 
@@ -12,91 +12,98 @@ type FormProps = {
 };
 
 const Form: React.FC<FormProps> = ({ fields, onSubmit }) => {
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const { control, handleSubmit, formState: { errors } } = useForm();
 
   return (
-    <AntForm onFinish={handleSubmit(onSubmit)} layout="vertical">
+    <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
       {fields.map((field) => {
         switch (field.type) {
           case 'input':
             return (
-              <AntForm.Item
-                key={field.name}
-                label={field.label}
-                validateStatus={errors[field.name] ? 'error' : ''}
-                help={errors[field.name]?.message}
-                required={field.required}
-              >
-                <Input {...register(field.name, field.validation)} />
-              </AntForm.Item>
+              <div key={field.name} style={{ marginBottom: '16px' }}>
+                <label>{field.label}</label>
+                <Controller
+                  name={field.name}
+                  control={control}
+                  rules={field.validation}
+                  render={({ field }) => <Input {...field} />}
+                />
+                {errors[field.name] && <p style={{ color: 'red' }}>{errors[field.name]?.message}</p>}
+              </div>
             );
           case 'select':
             return (
-              <AntForm.Item
-                key={field.name}
-                label={field.label}
-                validateStatus={errors[field.name] ? 'error' : ''}
-                help={errors[field.name]?.message}
-                required={field.required}
-              >
-                <Select {...register(field.name, field.validation)}>
-                  {field.options?.map(option => (
-                    <Option key={option.value} value={option.value}>
-                      {option.label}
-                    </Option>
-                  ))}
-                </Select>
-              </AntForm.Item>
+              <div key={field.name} style={{ marginBottom: '16px' }}>
+                <label>{field.label}</label>
+                <Controller
+                  name={field.name}
+                  control={control}
+                  rules={field.validation}
+                  render={({ field }) => (
+                    <Select {...field}>
+                      {field.options?.map((option) => (
+                        <Option key={option.value} value={option.value}>
+                          {option.label}
+                        </Option>
+                      ))}
+                    </Select>
+                  )}
+                />
+                {errors[field.name] && <p style={{ color: 'red' }}>{errors[field.name]?.message}</p>}
+              </div>
             );
           case 'radio':
             return (
-              <AntForm.Item
-                key={field.name}
-                label={field.label}
-                validateStatus={errors[field.name] ? 'error' : ''}
-                help={errors[field.name]?.message}
-                required={field.required}
-              >
-                <Radio.Group {...register(field.name, field.validation)}>
-                  {field.options?.map(option => (
-                    <Radio key={option.value} value={option.value}>
-                      {option.label}
-                    </Radio>
-                  ))}
-                </Radio.Group>
-              </AntForm.Item>
+              <div key={field.name} style={{ marginBottom: '16px' }}>
+                <label>{field.label}</label>
+                <Controller
+                  name={field.name}
+                  control={control}
+                  rules={field.validation}
+                  render={({ field }) => (
+                    <Radio.Group {...field}>
+                      {field.options?.map((option) => (
+                        <Radio key={option.value} value={option.value}>
+                          {option.label}
+                        </Radio>
+                      ))}
+                    </Radio.Group>
+                  )}
+                />
+                {errors[field.name] && <p style={{ color: 'red' }}>{errors[field.name]?.message}</p>}
+              </div>
             );
           case 'date':
             return (
-              <AntForm.Item
-                key={field.name}
-                label={field.label}
-                validateStatus={errors[field.name] ? 'error' : ''}
-                help={errors[field.name]?.message}
-                required={field.required}
-              >
-                <DatePicker {...register(field.name, field.validation)} />
-              </AntForm.Item>
+              <div key={field.name} style={{ marginBottom: '16px' }}>
+                <label>{field.label}</label>
+                <Controller
+                  name={field.name}
+                  control={control}
+                  rules={field.validation}
+                  render={({ field }) => <DatePicker {...field} />}
+                />
+                {errors[field.name] && <p style={{ color: 'red' }}>{errors[field.name]?.message}</p>}
+              </div>
             );
           case 'upload':
             return (
-              <AntForm.Item key={field.name} label={field.label} required={field.required}>
+              <div key={field.name} style={{ marginBottom: '16px' }}>
+                <label>{field.label}</label>
                 <Upload>
                   <Button icon={<UploadOutlined />}>{field.label}</Button>
                 </Upload>
-              </AntForm.Item>
+              </div>
             );
           default:
             return null;
         }
       })}
 
-      <AntForm.Item>
-        <Button type="primary" htmlType="submit">
-          Submit
-        </Button>
-      </AntForm.Item>
-    </AntForm>
+      <Button type="primary" htmlType="submit">
+        Submit
+      </Button>
+    </form>
   );
 };
 

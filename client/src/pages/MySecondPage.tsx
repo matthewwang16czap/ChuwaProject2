@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Form from '../forms/Form';
+import Form from '../forms/form.tsx';
 import { FieldType } from '../forms/types';
 import { message } from 'antd';
 
@@ -9,6 +9,7 @@ const Page: React.FC = () => {
 
   const handleResidentStatusChange = (value: string) => {
     setResidentStatus(value);
+    setWorkAuthType(null); // Reset work authorization type when resident status changes
   };
 
   const handleWorkAuthTypeChange = (value: string) => {
@@ -16,18 +17,18 @@ const Page: React.FC = () => {
   };
 
   const fields: FieldType[] = [
-    { name: 'firstName', label: 'First Name', type: 'input', required: true, validation: { required: 'First name is required' } },
-    { name: 'lastName', label: 'Last Name', type: 'input', required: true, validation: { required: 'Last name is required' } },
+    { name: 'firstName', label: 'First Name', type: 'input', required: true },
+    { name: 'lastName', label: 'Last Name', type: 'input', required: true },
     { name: 'middleName', label: 'Middle Name', type: 'input' },
     { name: 'preferredName', label: 'Preferred Name', type: 'input' },
     { name: 'profilePicture', label: 'Profile Picture', type: 'upload' },
 
     // Address Fields
-    { name: 'address.building', label: 'Building/Apt #', type: 'input', required: true, validation: { required: 'Building/Apt # is required' } },
-    { name: 'address.street', label: 'Street Name', type: 'input', required: true, validation: { required: 'Street name is required' } },
-    { name: 'address.city', label: 'City', type: 'input', required: true, validation: { required: 'City is required' } },
-    { name: 'address.state', label: 'State', type: 'input', required: true, validation: { required: 'State is required' } },
-    { name: 'address.zip', label: 'Zip Code', type: 'input', required: true, validation: { required: 'Zip is required' } },
+    { name: 'address.building', label: 'Building/Apt #', type: 'input', required: true },
+    { name: 'address.street', label: 'Street Name', type: 'input', required: true },
+    { name: 'address.city', label: 'City', type: 'input', required: true },
+    { name: 'address.state', label: 'State', type: 'input', required: true },
+    { name: 'address.zip', label: 'Zip Code', type: 'input', required: true },
 
     // Phones
     { name: 'cellPhone', label: 'Cell Phone', type: 'input' },
@@ -46,7 +47,7 @@ const Page: React.FC = () => {
     { name: 'residentStatus', label: 'Are you a Permanent Resident or Citizen?', type: 'radio', required: true, options: [
       { value: 'yes', label: 'Yes' },
       { value: 'no', label: 'No' }
-    ]},
+    ], onChange: handleResidentStatusChange }, // Use onChange to update resident status
 
     // Conditional Fields based on Resident Status
     ...(residentStatus === 'yes' ? [
@@ -63,7 +64,8 @@ const Page: React.FC = () => {
         { value: 'F1', label: 'F1 (CPT/OPT)' },
         { value: 'H4', label: 'H4' },
         { value: 'Other', label: 'Other' }
-      ]},
+      ], onChange: handleWorkAuthTypeChange }, // Handle changes to work authorization
+
       ...(workAuthType === 'F1' ? [
         { name: 'optReceipt', label: 'OPT Receipt', type: 'upload', required: true }
       ] : []),
