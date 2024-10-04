@@ -1,23 +1,41 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import * as EmailValidator from 'email-validator';
 
-// Step 1: Define an interface for the Application
+const phoneValidator = {
+  validator: (value: string) => value === "" || /^(\+?\d{1,3}[- ]?)?\d{10}$/.test(value),
+  message: (props: any) => `${props.value} is not a valid phone number!`,
+};
+
+const ssnValidator = {
+  validator: (value: string) => value === "" || /\d{9}/.test(value),
+  message: (props: any) => `${props.value} is not a valid ssn number!`,
+};
+
+const emailValidator = {
+  validator: (value: string) => value === "" || EmailValidator.validate(value),
+  message: (props: any) => `${props.value} is not a valid email address!`,
+};
+
+// Define the document interface
 interface IDocument {
-  employeeId: mongoose.Types.ObjectId;
   name: string;
-  url?: string; // URL of the document
-  status: 'Pending' | 'Approved' | 'Rejected'; // Document status
-  feedback?: string; // Feedback if the document is rejected
+  url?: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  feedback?: string;
 }
 
 interface IWorkAuthorization {
   visaType: 'H1-B' | 'L2' | 'F1(CPT/OPT)' | 'H4' | 'Other';
-  visaTitle?: string; // Only filled if visaType is 'Other'
+  visaTitle?: string;
   startDate: Date;
   endDate?: Date;
-  documents?: IDocument[]; // Array of documents required if F1
+  documents?: IDocument[];
 }
 
+// Define the application interface
 interface IApplication extends Document {
+  employeeId: Schema.Types.ObjectId;
+  email: string;
   firstName: string;
   lastName: string;
   middleName?: string;
@@ -32,12 +50,11 @@ interface IApplication extends Document {
   };
   cellPhone?: string;
   workPhone?: string;
-  email: string; // Pre-filled, not editable
   ssn?: string;
   dateOfBirth?: Date;
   gender?: 'Male' | 'Female' | 'Other';
   citizenship?: 'Green Card' | 'Citizen' | 'Work Authorization';
-  workAuthorization?: IWorkAuthorization; // Updated field
+  workAuthorization?: IWorkAuthorization;
   references?: {
     firstName: string;
     lastName: string;
@@ -59,15 +76,21 @@ interface IApplication extends Document {
     driversLicenseUrl?: string;
   };
   status: 'Pending' | 'Approved' | 'Rejected';
-  feedback?: string; // HR feedback if the application is rejected
+  feedback?: string;
 }
 
-// Step 2: Define the Application schema
+// Define the Application schema
 const ApplicationSchema: Schema = new Schema({
   employeeId: {
     type: Schema.Types.ObjectId,
-    ref: 'Employee', // Reference to the Employee schema
-    required: true, // Employee ID must be provided
+    ref: 'Employee',
+    required: true,
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    validate: emailValidator, // Use the external email validator
   },
   firstName: { type: String, default: '' },
   lastName: { type: String, default: '' },
@@ -79,56 +102,99 @@ const ApplicationSchema: Schema = new Schema({
     street: { type: String, default: '' },
     city: { type: String, default: '' },
     state: { type: String, default: '' },
-    zip: { type: String, default: '' }
+    zip: { type: String, default: '' },
   },
-  cellPhone: { type: String, default: '' },
-  workPhone: { type: String, default: '' },
-  email: { type: String, required: true, unique: true }, // Pre-filled, not editable
-  ssn: { type: String, default: '' },
+  cellPhone: { 
+    type: String, 
+    default: '', 
+    validate: phoneValidator, // Use the external phone validator 
+  },
+  workPhone: { 
+    type: String, 
+    default: '', 
+    validate: phoneValidator, // Use the external phone validator 
+  },
+  ssn: { 
+    type: String, 
+    default: '', 
+    validate: ssnValidator, // Simple SSN validation (9 digits)
+  },
   dateOfBirth: { type: Date, default: null },
   gender: { type: String, enum: ['Male', 'Female', 'Other'], default: 'Other' },
-  citizenship: { type: String, enum: ['Green Card', 'Citizen', 'Work Authorization'], default: 'Work Authorization' },
+  citizenship: { 
+    type: String, 
+    enum: ['Green Card', 'Citizen', 'Work Authorization'], 
+    default: 'Work Authorization',
+  },
   workAuthorization: {
-    visaType: { type: String, enum: ['H1-B', 'L2', 'F1(CPT/OPT)', 'H4', 'Other'], default: 'Other' },
-    visaTitle: { type: String, default: '' }, // Only filled if visaType is 'Other'
+    visaType: { 
+      type: String, 
+      enum: ['H1-B', 'L2', 'F1(CPT/OPT)', 'H4', 'Other'], 
+      default: 'Other',
+    },
+    visaTitle: { type: String, default: '' },
     startDate: { type: Date, default: null },
     endDate: { type: Date, default: null },
     documents: [
       {
-        name: { type: String, default: 'OPT Receipt', enum: ["OPT Receipt", "I-983", "I-20"] },
+        name: { 
+          type: String, 
+          default: 'OPT Receipt', 
+          enum: ['OPT Receipt', 'I-983', 'I-20'],
+        },
         url: { type: String, default: '' },
-        status: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' },
-        feedback: { type: String, default: '' } // Feedback if rejected
-      }
-    ]
+        status: { 
+          type: String, 
+          enum: ['Pending', 'Approved', 'Rejected'], 
+          default: 'Pending',
+        },
+        feedback: { type: String, default: '' },
+      },
+    ],
   },
   references: {
     firstName: { type: String, default: '' },
     lastName: { type: String, default: '' },
     middleName: { type: String, default: '' },
-    phone: { type: String, default: '' },
-    email: { type: String, default: '' },
-    relationship: { type: String, default: '' }
+    phone: { 
+      type: String, 
+      default: '', 
+      validate: phoneValidator, // Use the external phone validator 
+    },
+    email: {
+      type: String,
+      default: '',
+      validate: emailValidator, // Use the external email validator
+    },
+    relationship: { type: String, default: '' },
   },
   emergencyContacts: [
     {
       firstName: { type: String, default: '' },
       lastName: { type: String, default: '' },
       middleName: { type: String, default: '' },
-      phone: { type: String, default: '' },
-      email: { type: String, default: '' },
-      relationship: { type: String, default: '' }
-    }
+      phone: { 
+        type: String, 
+        default: '', 
+        validate: phoneValidator, // Use the external phone validator 
+      },
+      email: {
+        type: String,
+        default: '',
+        validate: emailValidator, // Use the external email validator
+      },
+      relationship: { type: String, default: '' },
+    },
   ],
   documents: {
     profilePictureUrl: { type: String, default: '' },
     driversLicenseUrl: { type: String, default: '' },
   },
   status: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' },
-  feedback: { type: String, default: '' } // Only filled if rejected
+  feedback: { type: String, default: '' },
 });
 
-// Step 3: Create the model
+// Create and export the Application model
 const Application = mongoose.model<IApplication>('Application', ApplicationSchema);
 
 export default Application;

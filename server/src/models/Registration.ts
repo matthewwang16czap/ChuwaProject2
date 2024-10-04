@@ -3,8 +3,8 @@ import mongoose, { Schema, Document } from 'mongoose';
 // Define the interface for registration history
 interface IRegistrationHistory {
   token: string;
-  createdAt: Date;
-  expireAt: Date; // Expiration date/time for the registration token
+  createdAt?: Date;
+  expireAt?: Date; // Expiration date/time for the registration token
 }
 
 // Define the interface for the Registration model

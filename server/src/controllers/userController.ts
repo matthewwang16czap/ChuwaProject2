@@ -29,7 +29,7 @@ export const login: RequestHandler = async (
     }
 
     // Verify the password
-    const isMatch = await user.verifyPassword(password); // Assuming user.verifyPassword is implemented
+    const isMatch = await user.verifyPassword(password); 
     if (!isMatch) {
       res.status(400).json({ message: "Invalid password." });
       return;
@@ -44,7 +44,7 @@ export const login: RequestHandler = async (
         user.employeeId,
         "applicationId"
       );
-      payload.user.employeeId = user.employeeId?.toString(); // Ensure employeeId is a string
+      payload.user.employeeId = user.employeeId?.toString(); 
       payload.user.applicationId = employee?.applicationId?.toString();
     }
 
