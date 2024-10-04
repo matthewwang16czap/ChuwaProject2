@@ -1,13 +1,18 @@
 import express, { Request, Response } from "express";
 import * as dotenv from 'dotenv';
 import connectDB from "./db";
-import errorHandler from './middleware/errorHandler';
+import userRouter from './routers/userRouter';
+import errorHandler from './middlewares/errorHandler';
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5001;
 
 connectDB();
+
+app.use(express.json());
+
+app.use('/api/user', userRouter);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello, TypeScript Express!");
