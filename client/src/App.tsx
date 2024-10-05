@@ -2,8 +2,9 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
-import MyPage from './pages/MyPage'
-import MySecondPage from './pages/MySecondPage'
+import OnboardingPage from './pages/OnboardingPage.tsx'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import PersonalInfoPage from './pages/PersonalInfoPage.tsx'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -30,12 +31,13 @@ function App() {
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
       </p>
-      <div>
-        <MyPage/>
-      </div>
-      <div>
-        <MySecondPage/>
-      </div>
+    <Router>
+      <Routes>
+        <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route path="/personalInfo" element={<PersonalInfoPage/>}/>
+        {/* Define other routes here */}
+      </Routes>
+    </Router>
     </>
   )
 }
