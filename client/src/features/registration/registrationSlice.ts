@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios, { AxiosError } from 'axios';
 
+const API_URL = "/api/registration";
+
 // Define types for the slice's state
 interface RegistrationState {
   invitationStatus: 'idle' | 'loading' | 'succeeded' | 'failed' | null;
@@ -36,7 +38,7 @@ export const sendInvitation = createAsyncThunk<
   'registration/sendInvitation',
   async (invitationData, { rejectWithValue }) => {
     try {
-      await axios.post('/api/registration/sendinvitation', invitationData);
+      await axios.post(`${API_URL}/sendinvitation`, invitationData);
     } catch (err: unknown) {
       if (err instanceof AxiosError && err.response) {
         return rejectWithValue(err.response.data);
@@ -55,7 +57,7 @@ export const register = createAsyncThunk<
   'registration/register',
   async (registrationData, { rejectWithValue }) => {
     try {
-      await axios.post('/api/registration/register', registrationData);
+      await axios.post(`${API_URL}/register`, registrationData);
     } catch (err: unknown) {
       if (err instanceof AxiosError && err.response) {
         return rejectWithValue(err.response.data);

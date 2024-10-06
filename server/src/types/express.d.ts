@@ -3,7 +3,7 @@ declare namespace Express {
   interface Request {
     user?: {
       role: string;
-      email?: string;
+      email: string;
       employeeId?: string;
       applicationId?: string;
     };
