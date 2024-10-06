@@ -37,11 +37,7 @@ export const verifyHR = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  if (!req?.user?.role) {
-    res.status(401).json({ message: "No token, authorization denied" });
-    return;
-  }
-  if (req.user.role === "HR") {
+  if (req?.user?.role === "HR") {
     next();
   }
   else {

@@ -75,7 +75,7 @@ export const register = async (
       return;
     }
     // Create a new user with username and password
-    const newUser = new User({ username, password, role: "Employee" });
+    const newUser = new User({ username, email, password, role: "Employee" });
     // Create a new Employee based on the email and userId
     const newEmployee = new Employee({ userId: newUser._id, email });
     // Update user's employeeId
