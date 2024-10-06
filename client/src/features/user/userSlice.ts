@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios, { AxiosError } from "axios";
 import { jwtDecode } from "jwt-decode"; // Import jwt-decode to decode JWT tokens
-
 const API_URL = "/api/user";
 
 // Define the JWT payload interface

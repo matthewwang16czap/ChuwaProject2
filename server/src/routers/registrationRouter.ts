@@ -1,6 +1,6 @@
 import express from 'express';
 import { sendInvitation, register } from '../controllers/registrationController'; 
-import {verifyToken, verifyHR} from "../middlewares/tokenAuth"
+import { verifyToken, verifyHR } from "../middlewares/tokenAuth"
 
 const router = express.Router();
 
