@@ -8,6 +8,7 @@ import multer from "multer";
 import path from "path";
 
 import Application, { IApplication } from "../models/Application";
+import Employee from "../models/Employee";
 
 // Employee Section
 
@@ -279,6 +280,60 @@ export const decideApplication: RequestHandler = async (
           status: "NeverSubmitted",
         });
       }
+      // update Employee document
+      const employee = await Employee.findById(application.employeeId);
+      if (!employee) {
+        res.status(404).json({ message: "Employee not found" });
+        return;
+      }
+      // Fill employee fields from the application
+      employee.email = application.email;
+      employee.firstName = application.firstName;
+      employee.lastName = application.lastName;
+      employee.middleName = application.middleName || "";
+      employee.preferredName = application.preferredName || "";
+      employee.profilePictureUrl = application.profilePictureUrl || "";
+      employee.ssn = application.ssn || "";
+      employee.dateOfBirth = application.dateOfBirth || null;
+      employee.gender = application.gender || "Other";
+      // Fill employee address
+      employee.address = {
+        building: application.address?.building || "",
+        street: application.address?.street || "",
+        city: application.address?.city || "",
+        state: application.address?.state || "",
+        zip: application.address?.zip || "",
+      };
+      // Fill employee contact info
+      employee.contactInfo = {
+        cellPhone: application.contactInfo?.cellPhone || "",
+        workPhone: application.contactInfo?.workPhone || "",
+      };
+      // Fill employment information from workAuthorization
+      if (application.workAuthorization) {
+        employee.employment = {
+          visaTitle: application.workAuthorization.visaTitle || "",
+          startDate: application.workAuthorization.startDate || null,
+          endDate: application.workAuthorization.endDate || null,
+        };
+      }
+      // Fill emergency contact details
+      if (application.emergencyContact) {
+        employee.emergencyContact = {
+          firstName: application.emergencyContact.firstName || "",
+          lastName: application.emergencyContact.lastName || "",
+          middleName: application.emergencyContact.middleName || "",
+          phone: application.emergencyContact.phone || "",
+          email: application.emergencyContact.email || "",
+          relationship: application.emergencyContact.relationship || "",
+        };
+      }
+      // Fill documents if available
+      employee.documents = {
+        profilePictureUrl: application.documents?.profilePictureUrl || "",
+        driversLicenseUrl: application.documents?.driversLicenseUrl || "",
+      };
+      await employee.save();
     }
     await application.save();
 
