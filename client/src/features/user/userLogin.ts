@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../app/store'; // Import RootState and AppDispatch
-import { login, checkAuth, logout } from '../features/user/userSlice'; // Use `login` action from userSlice
+import { login, checkAuth, logout } from './userSlice'; // Use `login` action from userSlice
 
 const UserProfile: React.FC = () => {
   const dispatch: AppDispatch = useDispatch(); // Use AppDispatch for dispatch
