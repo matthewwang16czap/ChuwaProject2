@@ -56,7 +56,7 @@ interface IEmployee extends Document {
   };
   documents?: {
     profilePictureUrl?: string;
-    driversLicenseUrl?: string;
+    driverLicenseUrl?: string;
   };
 }
 
@@ -132,7 +132,7 @@ const EmployeeSchema: Schema = new Schema({
   },
   documents: {
     profilePictureUrl: { type: String, default: "" },
-    driversLicenseUrl: { type: String, default: "" },
+    driverLicenseUrl: { type: String, default: "" },
   },
 });
 

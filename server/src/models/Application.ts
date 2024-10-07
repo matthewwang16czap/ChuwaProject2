@@ -20,7 +20,7 @@ const emailValidator = {
 // Define the document interface
 interface IDocument {
   name: string;
-  url?: string;
+  url: string | null;
   status: "NeverSubmitted" | "Pending" | "Approved" | "Rejected";
   feedback?: string;
 }
@@ -76,7 +76,7 @@ export interface IApplication extends Document {
   };
   documents?: {
     profilePictureUrl?: string;
-    driversLicenseUrl?: string;
+    driverLicenseUrl?: string;
   };
   status: "NeverSubmitted" | "Pending" | "Approved" | "Rejected";
   feedback?: string;
@@ -191,7 +191,7 @@ const ApplicationSchema: Schema = new Schema({
   },
   documents: {
     profilePictureUrl: { type: String, default: "" },
-    driversLicenseUrl: { type: String, default: "" },
+    driverLicenseUrl: { type: String, default: "" },
   },
   status: {
     type: String,

@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import connectDB from "./db";
 import userRouter from './routers/userRouter';
 import registrationRouter from './routers/registrationRouter';
+import applicationRouter from './routers/applicationRouter';
 import errorHandler from './middlewares/errorHandler';
 dotenv.config();
 
@@ -16,6 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/user', userRouter);
 app.use('/api/registration', registrationRouter);
+app.use('/api/application', applicationRouter);
 
 
 app.get("/", (req: Request, res: Response) => {

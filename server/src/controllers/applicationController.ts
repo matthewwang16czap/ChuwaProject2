@@ -1,3 +1,4 @@
+import fs from "fs";
 import express, {
   Request,
   Response,
@@ -15,8 +16,11 @@ import Employee from "../models/Employee";
 // Set up multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
+    console.log(file);
     const userId = req?.user?.userId || "default";
-    cb(null, path.join(__dirname, "documents", userId));
+    const dir = `${__dirname}/documents/${userId}`;
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
   },
   filename: (req, file, cb) => {
     const allowedFileNames = [
@@ -24,13 +28,13 @@ const storage = multer.diskStorage({
       "I-983",
       "I-20",
       "ProfilePicture",
-      "DriversLicense",
+      "DriverLicense",
     ];
     const originalName = path.parse(file.originalname).name;
     if (allowedFileNames.includes(originalName)) {
       cb(null, file.originalname);
     } else {
-      cb(new Error("Invalid file name"), "");
+      cb(new Error("Invalid file name"), file.originalname);
     }
   },
 });
@@ -52,23 +56,34 @@ export const uploadFile: RequestHandler = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  upload.single("file")(req, res, async (err: any) => {
+  upload.single("file")(req, res, async (err: unknown) => {
     if (err) {
       if (err instanceof multer.MulterError) {
         // A Multer error occurred when uploading.
         res.status(400).json({ message: err.message });
-      } else {
+      } else if (err instanceof Error) {
         // An unknown error occurred when uploading.
-        res.status(400).json({ message: "Unknown error", error: err });
+        res.status(400).json({
+          message: err.message,
+          error: err,
+        });
+      } else {
+        // Handle cases where err might be a string or another unknown type
+        return res
+          .status(400)
+          .json({ message: "Unexpected error", error: err });
       }
     } else {
+      if (!req.file) {
+        // No file provided
+        res.status(400).json({ message: "No file uploaded" });
+        return;
+      }
       try {
         const userId = req?.user?.userId || "default";
-        const filePath = path.join(
-          "documents",
-          userId,
+        const filePath = `documents/${userId}/${
           req?.file?.originalname || "default"
-        );
+        }`;
         const applicationId = req?.user?.applicationId;
         const fileName = path.parse(req?.file?.originalname || "default").name;
 
@@ -84,9 +99,17 @@ export const uploadFile: RequestHandler = async (
         switch (fileName) {
           case "ProfilePicture":
             updateField = { "documents.profilePictureUrl": filePath };
+            // Update the Application document with the file URL
+            await Application.findByIdAndUpdate(applicationId, {
+              $set: updateField,
+            });
             break;
-          case "DriversLicense":
-            updateField = { "documents.driversLicenseUrl": filePath };
+          case "DriverLicense":
+            updateField = { "documents.driverLicenseUrl": filePath };
+            // Update the Application document with the file URL
+            await Application.findByIdAndUpdate(applicationId, {
+              $set: updateField,
+            });
             break;
           default:
             // Check if the workAuthorization document for the given fileName exists
@@ -96,7 +119,7 @@ export const uploadFile: RequestHandler = async (
             if (!document) {
               res
                 .status(400)
-                .json({ message: `Document ${fileName} not found` });
+                .json({ message: `Document ${fileName} section not found` });
               return;
             }
             if (document.status !== "NeverSubmitted") {
@@ -109,20 +132,18 @@ export const uploadFile: RequestHandler = async (
               "workAuthorization.documents.$[elem].url": filePath,
               "workAuthorization.documents.$[elem].status": "Pending",
             };
+            // Update the Application document with the file URL
+            await Application.findByIdAndUpdate(
+              applicationId,
+              {
+                $set: updateField,
+              },
+              {
+                arrayFilters: [{ "elem.name": fileName }],
+              }
+            );
             break;
         }
-
-        // Update the Application document with the file URL
-        await Application.findByIdAndUpdate(
-          applicationId,
-          {
-            $set: updateField,
-          },
-          {
-            arrayFilters: [{ "elem.name": fileName }],
-          }
-        );
-
         res.status(201).json({ message: "Upload successfully", filePath });
       } catch (error) {
         res.status(500).json({ message: "Database error", error });
@@ -278,6 +299,7 @@ export const decideApplication: RequestHandler = async (
         application.workAuthorization.documents.push({
           name: "OPTReceipt",
           status: "NeverSubmitted",
+          url: null,
         });
       }
       // update Employee document
@@ -331,7 +353,7 @@ export const decideApplication: RequestHandler = async (
       // Fill documents if available
       employee.documents = {
         profilePictureUrl: application.documents?.profilePictureUrl || "",
-        driversLicenseUrl: application.documents?.driversLicenseUrl || "",
+        driverLicenseUrl: application.documents?.driverLicenseUrl || "",
       };
       await employee.save();
     }
@@ -408,11 +430,13 @@ export const decideDocument: RequestHandler = async (
         application?.workAuthorization?.documents?.push({
           name: "I-983",
           status: "NeverSubmitted",
+          url: null,
         });
       } else if (documentName === "I-983") {
         application?.workAuthorization?.documents?.push({
           name: "I-20",
           status: "NeverSubmitted",
+          url: null,
         });
       }
     }
