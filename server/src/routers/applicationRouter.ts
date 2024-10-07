@@ -15,28 +15,30 @@ import {
 const router = express.Router();
 
 // Route to handle file uploads
-router.post("/application/documents", verifyToken, verifyEmployee, uploadFile);
+router.post("/documents", verifyToken, verifyEmployee, uploadFile);
 router.put(
-  "/application/update",
+  "/update",
   verifyToken,
   verifyEmployee,
   updateApplication
 );
 router.put(
-  "/application/submit",
+  "/submit",
   verifyToken,
   verifyEmployee,
   submitApplication
 );
 router.put(
-  "/application/:applicationId/decide",
+  "/:applicationId/decide",
   verifyToken,
   verifyHR,
   decideApplication
 );
 router.put(
-  "/application/:applicationId/documents/decide",
+  "/:applicationId/documents/decide",
   verifyToken,
   verifyHR,
   decideDocument
 );
+
+export default router;

@@ -8,7 +8,7 @@ dotenv.config();
 const sampleHRAccount: HRAccount = {
   username: "hradmin",
   email: "hradmin@sample.com",
-  password: "HRadmin123", 
+  password: "HRadmin123!", 
   role: "HR",
 };
 
