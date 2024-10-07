@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 
 interface IPayload {
   user: {
+    userId: string | null | undefined;
     role: string;
     email: string;
     employeeId?: string | null | undefined;
@@ -37,7 +38,7 @@ export const login: RequestHandler = async (
     }
 
     // Create JWT payload
-    const payload: IPayload = { user: { role: user.role, email: user.email } };
+    const payload: IPayload = { user: { userId: user._id?.toString(), role: user.role, email: user.email } };
 
     // Get employeeId and applicationId if the user is not an HR
     if (user.role !== "HR") {

@@ -20,7 +20,7 @@ const emailValidator = {
 interface IDocument {
   name: string;
   url?: string;
-  status: 'Pending' | 'Approved' | 'Rejected';
+  status: 'NeverSubmitted'| 'Pending' | 'Approved' | 'Rejected';
   feedback?: string;
 }
 
@@ -33,7 +33,7 @@ interface IWorkAuthorization {
 }
 
 // Define the application interface
-interface IApplication extends Document {
+export interface IApplication extends Document {
   employeeId: Schema.Types.ObjectId;
   email: string;
   firstName: string;
@@ -53,7 +53,7 @@ interface IApplication extends Document {
   ssn?: string;
   dateOfBirth?: Date;
   gender?: 'Male' | 'Female' | 'Other';
-  citizenship?: 'Green Card' | 'Citizen' | 'Work Authorization';
+  citizenship?: 'GreenCard' | 'Citizen' | 'WorkAuthorization';
   workAuthorization?: IWorkAuthorization;
   references?: {
     firstName: string;
@@ -75,7 +75,7 @@ interface IApplication extends Document {
     profilePictureUrl?: string;
     driversLicenseUrl?: string;
   };
-  status: 'Pending' | 'Approved' | 'Rejected';
+  status: 'NeverSubmitted' | 'Pending' | 'Approved' | 'Rejected';
   feedback?: string;
 }
 
@@ -123,8 +123,8 @@ const ApplicationSchema: Schema = new Schema({
   gender: { type: String, enum: ['Male', 'Female', 'Other'], default: 'Other' },
   citizenship: { 
     type: String, 
-    enum: ['Green Card', 'Citizen', 'Work Authorization'], 
-    default: 'Work Authorization',
+    enum: ['GreenCard', 'Citizen', 'WorkAuthorization'], 
+    default: 'WorkAuthorization',
   },
   workAuthorization: {
     visaType: { 
@@ -139,14 +139,14 @@ const ApplicationSchema: Schema = new Schema({
       {
         name: { 
           type: String, 
-          default: 'OPT Receipt', 
-          enum: ['OPT Receipt', 'I-983', 'I-20'],
+          default: 'OPTReceipt', 
+          enum: ['OPTReceipt', 'I-983', 'I-20'],
         },
         url: { type: String, default: '' },
         status: { 
           type: String, 
-          enum: ['Pending', 'Approved', 'Rejected'], 
-          default: 'Pending',
+          enum: ['NeverSubmitted', 'Pending', 'Approved', 'Rejected'], 
+          default: 'NeverSubmitted',
         },
         feedback: { type: String, default: '' },
       },
@@ -190,7 +190,7 @@ const ApplicationSchema: Schema = new Schema({
     profilePictureUrl: { type: String, default: '' },
     driversLicenseUrl: { type: String, default: '' },
   },
-  status: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' },
+  status: { type: String, enum: ['NeverSubmitted', 'Pending', 'Approved', 'Rejected'], default: 'NeverSubmitted' },
   feedback: { type: String, default: '' },
 });
 
