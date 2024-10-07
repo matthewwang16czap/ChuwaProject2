@@ -1,8 +1,9 @@
-import mongoose, { Schema, Document } from 'mongoose';
-import * as EmailValidator from 'email-validator';
+import mongoose, { Schema, Document } from "mongoose";
+import * as EmailValidator from "email-validator";
 
 const phoneValidator = {
-  validator: (value: string) => value === "" || /^(\+?\d{1,3}[- ]?)?\d{10}$/.test(value),
+  validator: (value: string) =>
+    value === "" || /^(\+?\d{1,3}[- ]?)?\d{10}$/.test(value),
   message: (props: any) => `${props.value} is not a valid phone number!`,
 };
 
@@ -20,12 +21,12 @@ const emailValidator = {
 interface IDocument {
   name: string;
   url?: string;
-  status: 'Pending' | 'Approved' | 'Rejected';
+  status: "NeverSubmitted" | "Pending" | "Approved" | "Rejected";
   feedback?: string;
 }
 
 interface IWorkAuthorization {
-  visaType: 'H1-B' | 'L2' | 'F1(CPT/OPT)' | 'H4' | 'Other';
+  visaType: "H1-B" | "L2" | "F1(CPT/OPT)" | "H4" | "Other";
   visaTitle?: string;
   startDate: Date;
   endDate?: Date;
@@ -33,7 +34,7 @@ interface IWorkAuthorization {
 }
 
 // Define the application interface
-interface IApplication extends Document {
+export interface IApplication extends Document {
   employeeId: Schema.Types.ObjectId;
   email: string;
   firstName: string;
@@ -48,12 +49,14 @@ interface IApplication extends Document {
     state: string;
     zip: string;
   };
-  cellPhone?: string;
-  workPhone?: string;
+  contactInfo?: {
+    cellPhone: string;
+    workPhone?: string;
+  };
   ssn?: string;
   dateOfBirth?: Date;
-  gender?: 'Male' | 'Female' | 'Other';
-  citizenship?: 'Green Card' | 'Citizen' | 'Work Authorization';
+  gender?: "Male" | "Female" | "Other";
+  citizenship?: "GreenCard" | "Citizen" | "WorkAuthorization";
   workAuthorization?: IWorkAuthorization;
   references?: {
     firstName: string;
@@ -63,19 +66,19 @@ interface IApplication extends Document {
     email: string;
     relationship: string;
   };
-  emergencyContacts?: {
+  emergencyContact?: {
     firstName: string;
     lastName: string;
     middleName?: string;
     phone: string;
     email: string;
     relationship: string;
-  }[];
+  };
   documents?: {
     profilePictureUrl?: string;
     driversLicenseUrl?: string;
   };
-  status: 'Pending' | 'Approved' | 'Rejected';
+  status: "NeverSubmitted" | "Pending" | "Approved" | "Rejected";
   feedback?: string;
 }
 
@@ -83,7 +86,7 @@ interface IApplication extends Document {
 const ApplicationSchema: Schema = new Schema({
   employeeId: {
     type: Schema.Types.ObjectId,
-    ref: 'Employee',
+    ref: "Employee",
     required: true,
   },
   email: {
@@ -92,109 +95,116 @@ const ApplicationSchema: Schema = new Schema({
     unique: true,
     validate: emailValidator, // Use the external email validator
   },
-  firstName: { type: String, default: '' },
-  lastName: { type: String, default: '' },
-  middleName: { type: String, default: '' },
-  preferredName: { type: String, default: '' },
-  profilePictureUrl: { type: String, default: '' },
+  firstName: { type: String, default: "" },
+  lastName: { type: String, default: "" },
+  middleName: { type: String, default: "" },
+  preferredName: { type: String, default: "" },
+  profilePictureUrl: { type: String, default: "" },
   address: {
-    building: { type: String, default: '' },
-    street: { type: String, default: '' },
-    city: { type: String, default: '' },
-    state: { type: String, default: '' },
-    zip: { type: String, default: '' },
+    building: { type: String, default: "" },
+    street: { type: String, default: "" },
+    city: { type: String, default: "" },
+    state: { type: String, default: "" },
+    zip: { type: String, default: "" },
   },
-  cellPhone: { 
-    type: String, 
-    default: '', 
-    validate: phoneValidator, // Use the external phone validator 
+  contactInfo: {
+    cellPhone: {
+      type: String,
+      default: "",
+      validate: phoneValidator, // Add phone number validation
+    },
+    workPhone: {
+      type: String,
+      default: "",
+      validate: phoneValidator, // Add phone number validation
+    },
   },
-  workPhone: { 
-    type: String, 
-    default: '', 
-    validate: phoneValidator, // Use the external phone validator 
-  },
-  ssn: { 
-    type: String, 
-    default: '', 
+  ssn: {
+    type: String,
+    default: "",
     validate: ssnValidator, // Simple SSN validation (9 digits)
   },
   dateOfBirth: { type: Date, default: null },
-  gender: { type: String, enum: ['Male', 'Female', 'Other'], default: 'Other' },
-  citizenship: { 
-    type: String, 
-    enum: ['Green Card', 'Citizen', 'Work Authorization'], 
-    default: 'Work Authorization',
+  gender: { type: String, enum: ["Male", "Female", "Other"], default: "Other" },
+  citizenship: {
+    type: String,
+    enum: ["GreenCard", "Citizen", "WorkAuthorization"],
+    default: "WorkAuthorization",
   },
   workAuthorization: {
-    visaType: { 
-      type: String, 
-      enum: ['H1-B', 'L2', 'F1(CPT/OPT)', 'H4', 'Other'], 
-      default: 'Other',
+    visaType: {
+      type: String,
+      enum: ["H1-B", "L2", "F1(CPT/OPT)", "H4", "Other"],
+      default: "Other",
     },
-    visaTitle: { type: String, default: '' },
+    visaTitle: { type: String, default: "" },
     startDate: { type: Date, default: null },
     endDate: { type: Date, default: null },
     documents: [
       {
-        name: { 
-          type: String, 
-          default: 'OPT Receipt', 
-          enum: ['OPT Receipt', 'I-983', 'I-20'],
+        name: {
+          type: String,
+          default: "OPTReceipt",
+          enum: ["OPTReceipt", "I-983", "I-20"],
         },
-        url: { type: String, default: '' },
-        status: { 
-          type: String, 
-          enum: ['Pending', 'Approved', 'Rejected'], 
-          default: 'Pending',
+        url: { type: String, default: "" },
+        status: {
+          type: String,
+          enum: ["NeverSubmitted", "Pending", "Approved", "Rejected"],
+          default: "NeverSubmitted",
         },
-        feedback: { type: String, default: '' },
+        feedback: { type: String, default: "" },
       },
     ],
   },
   references: {
-    firstName: { type: String, default: '' },
-    lastName: { type: String, default: '' },
-    middleName: { type: String, default: '' },
-    phone: { 
-      type: String, 
-      default: '', 
-      validate: phoneValidator, // Use the external phone validator 
+    firstName: { type: String, default: "" },
+    lastName: { type: String, default: "" },
+    middleName: { type: String, default: "" },
+    phone: {
+      type: String,
+      default: "",
+      validate: phoneValidator, // Use the external phone validator
     },
     email: {
       type: String,
-      default: '',
+      default: "",
       validate: emailValidator, // Use the external email validator
     },
-    relationship: { type: String, default: '' },
+    relationship: { type: String, default: "" },
   },
-  emergencyContacts: [
-    {
-      firstName: { type: String, default: '' },
-      lastName: { type: String, default: '' },
-      middleName: { type: String, default: '' },
-      phone: { 
-        type: String, 
-        default: '', 
-        validate: phoneValidator, // Use the external phone validator 
-      },
-      email: {
-        type: String,
-        default: '',
-        validate: emailValidator, // Use the external email validator
-      },
-      relationship: { type: String, default: '' },
+  emergencyContact: {
+    firstName: { type: String, default: "" },
+    lastName: { type: String, default: "" },
+    middleName: { type: String, default: "" },
+    phone: {
+      type: String,
+      default: "",
+      validate: phoneValidator, // Use the external phone validator
     },
-  ],
-  documents: {
-    profilePictureUrl: { type: String, default: '' },
-    driversLicenseUrl: { type: String, default: '' },
+    email: {
+      type: String,
+      default: "",
+      validate: emailValidator, // Use the external email validator
+    },
+    relationship: { type: String, default: "" },
   },
-  status: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' },
-  feedback: { type: String, default: '' },
+  documents: {
+    profilePictureUrl: { type: String, default: "" },
+    driversLicenseUrl: { type: String, default: "" },
+  },
+  status: {
+    type: String,
+    enum: ["NeverSubmitted", "Pending", "Approved", "Rejected"],
+    default: "NeverSubmitted",
+  },
+  feedback: { type: String, default: "" },
 });
 
 // Create and export the Application model
-const Application = mongoose.model<IApplication>('Application', ApplicationSchema);
+const Application = mongoose.model<IApplication>(
+  "Application",
+  ApplicationSchema
+);
 
 export default Application;

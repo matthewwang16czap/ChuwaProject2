@@ -27,9 +27,9 @@ interface IEmployee extends Document {
   middleName?: string;
   preferredName?: string;
   profilePictureUrl?: string;
-  ssn?: string;
-  dateOfBirth?: Date;
-  gender?: "Male" | "Female" | "Other";
+  ssn: string;
+  dateOfBirth: Date | null;
+  gender: "Male" | "Female" | "Other";
   address?: {
     building: string;
     street: string;
@@ -44,7 +44,7 @@ interface IEmployee extends Document {
   employment?: {
     visaTitle: string;
     startDate: Date;
-    endDate?: Date;
+    endDate?: Date | null;
   };
   emergencyContact?: {
     firstName: string;
@@ -55,9 +55,9 @@ interface IEmployee extends Document {
     relationship: string;
   };
   documents?: {
-    name: string;
-    url: string;
-  }[];
+    profilePictureUrl?: string;
+    driversLicenseUrl?: string;
+  };
 }
 
 // Define the Employee schema with external email validator
@@ -121,7 +121,7 @@ const EmployeeSchema: Schema = new Schema({
     phone: {
       type: String,
       default: "",
-      validate: phoneValidator, // Add phone number validation
+      validate: phoneValidator, // Use the external phone validator
     },
     email: {
       type: String,
@@ -130,12 +130,10 @@ const EmployeeSchema: Schema = new Schema({
     },
     relationship: { type: String, default: "" },
   },
-  documents: [
-    {
-      name: { type: String, default: "" },
-      url: { type: String, default: "" },
-    },
-  ],
+  documents: {
+    profilePictureUrl: { type: String, default: "" },
+    driversLicenseUrl: { type: String, default: "" },
+  },
 });
 
 // Create and export the Employee model
