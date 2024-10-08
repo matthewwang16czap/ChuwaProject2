@@ -8,7 +8,8 @@ const phoneValidator = {
 };
 
 const ssnValidator = {
-  validator: (value: string) => value === "" || /\d{9}/.test(value),
+  validator: (value: any) =>
+    value === "" || /^\d{3}-?\d{2}-?\d{4}$/.test(value),
   message: (props: any) => `${props.value} is not a valid ssn number!`,
 };
 
@@ -41,7 +42,6 @@ export interface IApplication extends Document {
   lastName: string;
   middleName?: string;
   preferredName?: string;
-  profilePictureUrl?: string;
   address?: {
     building: string;
     street: string;
@@ -99,30 +99,53 @@ const ApplicationSchema: Schema = new Schema({
   lastName: { type: String, default: "" },
   middleName: { type: String, default: "" },
   preferredName: { type: String, default: "" },
-  profilePictureUrl: { type: String, default: "" },
   address: {
-    building: { type: String, default: "" },
-    street: { type: String, default: "" },
-    city: { type: String, default: "" },
-    state: { type: String, default: "" },
-    zip: { type: String, default: "" },
+    type: {
+      building: { type: String, default: "" },
+      street: { type: String, default: "" },
+      city: { type: String, default: "" },
+      state: { type: String, default: "" },
+      zip: { type: String, default: "" },
+    },
+    set: function (value: any) {
+      if (
+        typeof value !== "object" ||
+        !value.building ||
+        !value.street ||
+        !value.city ||
+        !value.state ||
+        !value.zip
+      ) {
+        throw new Error("Invalid address format.");
+      }
+      return value;
+    },
   },
   contactInfo: {
-    cellPhone: {
-      type: String,
-      default: "",
-      validate: phoneValidator, // Add phone number validation
+    type: {
+      cellPhone: {
+        type: String,
+        default: "",
+        validate: phoneValidator, // Add phone number validation
+      },
+      workPhone: {
+        type: String,
+        default: "",
+        validate: phoneValidator, // Add phone number validation
+      },
     },
-    workPhone: {
-      type: String,
-      default: "",
-      validate: phoneValidator, // Add phone number validation
+    set: function (value: any) {
+      // Ensure contactInfo is an object and contains at least cellPhone and workPhone
+      if (typeof value !== "object" || !value.cellPhone || !value.workPhone) {
+        throw new Error("Invalid contactInfo format.");
+      }
+      return value;
     },
   },
   ssn: {
     type: String,
     default: "",
-    validate: ssnValidator, // Simple SSN validation (9 digits)
+    validate: ssnValidator,
   },
   dateOfBirth: { type: Date, default: null },
   gender: { type: String, enum: ["Male", "Female", "Other"], default: "Other" },
@@ -158,36 +181,68 @@ const ApplicationSchema: Schema = new Schema({
     ],
   },
   references: {
-    firstName: { type: String, default: "" },
-    lastName: { type: String, default: "" },
-    middleName: { type: String, default: "" },
-    phone: {
-      type: String,
-      default: "",
-      validate: phoneValidator, // Use the external phone validator
+    type: {
+      firstName: { type: String, default: "" },
+      lastName: { type: String, default: "" },
+      middleName: { type: String, default: "" },
+      phone: {
+        type: String,
+        default: "",
+        validate: phoneValidator, // Use the external phone validator
+      },
+      email: {
+        type: String,
+        default: "",
+        validate: emailValidator, // Use the external email validator
+      },
+      relationship: { type: String, default: "" },
     },
-    email: {
-      type: String,
-      default: "",
-      validate: emailValidator, // Use the external email validator
+    set: function (value: any) {
+      // Ensure contactInfo is an object and contains at least cellPhone and workPhone
+      if (
+        typeof value !== "object" ||
+        !value.firstName ||
+        !value.lastName ||
+        !value.phone ||
+        !value.email ||
+        !value.relationship
+      ) {
+        throw new Error("Invalid references format.");
+      }
+      return value;
     },
-    relationship: { type: String, default: "" },
   },
   emergencyContact: {
-    firstName: { type: String, default: "" },
-    lastName: { type: String, default: "" },
-    middleName: { type: String, default: "" },
-    phone: {
-      type: String,
-      default: "",
-      validate: phoneValidator, // Use the external phone validator
+    type: {
+      firstName: { type: String, default: "" },
+      lastName: { type: String, default: "" },
+      middleName: { type: String, default: "" },
+      phone: {
+        type: String,
+        default: "",
+        validate: phoneValidator, // Use the external phone validator
+      },
+      email: {
+        type: String,
+        default: "",
+        validate: emailValidator, // Use the external email validator
+      },
+      relationship: { type: String, default: "" },
     },
-    email: {
-      type: String,
-      default: "",
-      validate: emailValidator, // Use the external email validator
+    set: function (value: any) {
+      // Ensure contactInfo is an object and contains at least cellPhone and workPhone
+      if (
+        typeof value !== "object" ||
+        value.firstName == null ||
+        value.lastName == null ||
+        value.phone == null ||
+        value.email == null ||
+        value.relationship == null
+      ) {
+        throw new Error("Invalid emergencyContact format.");
+      }
+      return value;
     },
-    relationship: { type: String, default: "" },
   },
   documents: {
     profilePictureUrl: { type: String, default: "" },

@@ -18,7 +18,7 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     console.log(file);
     const userId = req?.user?.userId || "default";
-    const dir = `${__dirname}/documents/${userId}`;
+    const dir = `${__dirname}/../documents/${userId}`;
     fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
@@ -95,7 +95,7 @@ export const uploadFile: RequestHandler = async (
         }
 
         // Determine the field to update based on the file name
-        let updateField: any = {};
+        let updateField: object = {};
         switch (fileName) {
           case "ProfilePicture":
             updateField = { "documents.profilePictureUrl": filePath };
@@ -103,11 +103,20 @@ export const uploadFile: RequestHandler = async (
             await Application.findByIdAndUpdate(applicationId, {
               $set: updateField,
             });
+            // Update the Employee document as well
+            await Employee.findByIdAndUpdate(req?.user?.employeeId, {
+              $set: updateField,
+            });
+            break;
             break;
           case "DriverLicense":
             updateField = { "documents.driverLicenseUrl": filePath };
             // Update the Application document with the file URL
             await Application.findByIdAndUpdate(applicationId, {
+              $set: updateField,
+            });
+            // Update the Employee document as well
+            await Employee.findByIdAndUpdate(req?.user?.employeeId, {
               $set: updateField,
             });
             break;
@@ -142,7 +151,6 @@ export const uploadFile: RequestHandler = async (
                 arrayFilters: [{ "elem.name": fileName }],
               }
             );
-            break;
         }
         res.status(201).json({ message: "Upload successfully", filePath });
       } catch (error) {
@@ -166,14 +174,20 @@ export const updateApplication: RequestHandler = async (
     }
 
     // Exclude documents in workAuthorization and documents field from req.body
-    const { workAuthorization, documents, status, feedback, ...updateData } =
-      req.body;
+    const {
+      workAuthorization,
+      documents,
+      email,
+      status,
+      feedback,
+      ...updateData
+    } = req.body;
 
     // Update the application with the remaining fields
     const updatedApplication = await Application.findByIdAndUpdate(
       applicationId,
       { $set: updateData },
-      { new: true }
+      { new: true, runValidators: true }
     );
 
     if (!updatedApplication) {
@@ -208,8 +222,13 @@ export const submitApplication: RequestHandler = async (
     }
 
     const fieldsToExclude: Array<keyof IApplication> = [
+      "middleName",
+      "preferredName",
       "documents",
       "workAuthorization",
+      "references",
+      "emergencyContact",
+      "feedback",
     ];
     const applicationObject = application.toObject();
     const emptyFields: string[] = [];
@@ -314,11 +333,11 @@ export const decideApplication: RequestHandler = async (
       employee.lastName = application.lastName;
       employee.middleName = application.middleName || "";
       employee.preferredName = application.preferredName || "";
-      employee.profilePictureUrl = application.profilePictureUrl || "";
       employee.ssn = application.ssn || "";
       employee.dateOfBirth = application.dateOfBirth || null;
       employee.gender = application.gender || "Other";
       // Fill employee address
+      employee.citizenship = application.citizenship || "WorkAuthorization";
       employee.address = {
         building: application.address?.building || "",
         street: application.address?.street || "",
@@ -334,6 +353,7 @@ export const decideApplication: RequestHandler = async (
       // Fill employment information from workAuthorization
       if (application.workAuthorization) {
         employee.employment = {
+          visaType: application.workAuthorization.visaType || "Other",
           visaTitle: application.workAuthorization.visaTitle || "",
           startDate: application.workAuthorization.startDate || null,
           endDate: application.workAuthorization.endDate || null,
@@ -452,5 +472,49 @@ export const decideDocument: RequestHandler = async (
     res
       .status(500)
       .json({ message: "Failed to process document decision", error });
+  }
+};
+
+export const searchApplication: RequestHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const { documents } = req.body;
+
+  if (!Array.isArray(documents) || documents.length === 0) {
+    res
+      .status(400)
+      .json({
+        message: "An array of documents with name and status is required.",
+      });
+    return;
+  }
+
+  try {
+    const query = documents.map((doc) => ({
+      "workAuthorization.documents": {
+        $elemMatch: {
+          name: doc.name,
+          status: doc.status,
+        },
+      },
+    }));
+
+    const applications = await Application.find({
+      $and: query,
+    });
+
+    if (applications.length === 0) {
+      res.status(404).json({ message: "No applications found" });
+      return;
+    }
+    res
+      .status(200)
+      .json({ message: "Search application successfully", applications });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error searching for applications", error });
   }
 };
