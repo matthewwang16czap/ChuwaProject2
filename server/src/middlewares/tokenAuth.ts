@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import Employee from "../models/Employee";
 
 export const verifyToken = async (
   req: Request,
@@ -32,19 +33,33 @@ export const verifyToken = async (
   }
 };
 
+// Verify HR account
 export const verifyHR = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  if (!req?.user?.role) {
-    res.status(401).json({ message: "No token, authorization denied" });
-    return;
-  }
-  if (req.user.role === "HR") {
+  if (req?.user?.role === "HR") {
     next();
+  } else {
+    res.status(401).json({ message: "Permission Denied" });
   }
-  else {
+};
+
+// Verify employee operates on oneself's account
+export const verifyEmployee = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  // verify role and potential operation on different account
+  if (
+    req?.user?.role === "Employee" &&
+    ((req?.params?.userId && req.user.userId === req.params.userId) ||
+      !req?.params?.userId)
+  ) {
+    next();
+  } else {
     res.status(401).json({ message: "Permission Denied" });
   }
 };

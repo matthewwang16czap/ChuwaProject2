@@ -8,7 +8,8 @@ const phoneValidator = {
 };
 
 const ssnValidator = {
-  validator: (value: string) => value === "" || /\d{9}/.test(value),
+  validator: (value: any) =>
+    value === "" || /^\d{3}-?\d{2}-?\d{4}$/.test(value),
   message: (props: any) => `${props.value} is not a valid ssn number!`,
 };
 
@@ -26,10 +27,10 @@ interface IEmployee extends Document {
   lastName: string;
   middleName?: string;
   preferredName?: string;
-  profilePictureUrl?: string;
-  ssn?: string;
-  dateOfBirth?: Date;
-  gender?: "Male" | "Female" | "Other";
+  ssn: string;
+  dateOfBirth: Date | null;
+  gender: "Male" | "Female" | "Other";
+  citizenship?: "GreenCard" | "Citizen" | "WorkAuthorization";
   address?: {
     building: string;
     street: string;
@@ -42,9 +43,10 @@ interface IEmployee extends Document {
     workPhone?: string;
   };
   employment?: {
+    visaType: string;
     visaTitle: string;
     startDate: Date;
-    endDate?: Date;
+    endDate?: Date | null;
   };
   emergencyContact?: {
     firstName: string;
@@ -55,9 +57,9 @@ interface IEmployee extends Document {
     relationship: string;
   };
   documents?: {
-    name: string;
-    url: string;
-  }[];
+    profilePictureUrl?: string;
+    driverLicenseUrl?: string;
+  };
 }
 
 // Define the Employee schema with external email validator
@@ -82,7 +84,6 @@ const EmployeeSchema: Schema = new Schema({
   lastName: { type: String, default: "" },
   middleName: { type: String, default: "" },
   preferredName: { type: String, default: "" },
-  profilePictureUrl: { type: String, default: "" }, // URL for the profile picture
   ssn: {
     type: String,
     default: "",
@@ -90,52 +91,101 @@ const EmployeeSchema: Schema = new Schema({
   },
   dateOfBirth: { type: Date, default: null },
   gender: { type: String, enum: ["Male", "Female", "Other"], default: "Other" },
+  citizenship: {
+    type: String,
+    enum: ["GreenCard", "Citizen", "WorkAuthorization"],
+    default: "WorkAuthorization",
+  },
   address: {
-    building: { type: String, default: "" },
-    street: { type: String, default: "" },
-    city: { type: String, default: "" },
-    state: { type: String, default: "" },
-    zip: { type: String, default: "" },
+    type: {
+      building: { type: String, default: "" },
+      street: { type: String, default: "" },
+      city: { type: String, default: "" },
+      state: { type: String, default: "" },
+      zip: { type: String, default: "" },
+    },
+    set: function (value: any) {
+      // Ensure the address is an object and contains the required fields
+      if (
+        typeof value !== "object" ||
+        !value.building ||
+        !value.street ||
+        !value.city ||
+        !value.state ||
+        !value.zip
+      ) {
+        throw new Error("Invalid address format.");
+      }
+      return value;
+    },
   },
   contactInfo: {
-    cellPhone: {
-      type: String,
-      default: "",
-      validate: phoneValidator, // Add phone number validation
+    type: {
+      cellPhone: {
+        type: String,
+        default: "",
+        validate: phoneValidator, // Add phone number validation
+      },
+      workPhone: {
+        type: String,
+        default: "",
+        validate: phoneValidator, // Add phone number validation
+      },
     },
-    workPhone: {
-      type: String,
-      default: "",
-      validate: phoneValidator, // Add phone number validation
+    set: function (value: any) {
+      // Ensure contactInfo is an object and contains at least cellPhone and workPhone
+      if (typeof value !== "object" || !value.cellPhone || !value.workPhone) {
+        throw new Error("Invalid contactInfo format.");
+      }
+      return value;
     },
   },
   employment: {
+    visaType: {
+      type: String,
+      enum: ["H1-B", "L2", "F1(CPT/OPT)", "H4", "Other"],
+      default: "Other",
+    },
     visaTitle: { type: String, default: "" },
     startDate: { type: Date, default: null },
     endDate: { type: Date, default: null },
   },
   emergencyContact: {
-    firstName: { type: String, default: "" },
-    lastName: { type: String, default: "" },
-    middleName: { type: String, default: "" },
-    phone: {
-      type: String,
-      default: "",
-      validate: phoneValidator, // Add phone number validation
+    type: {
+      firstName: { type: String, default: "" },
+      lastName: { type: String, default: "" },
+      middleName: { type: String, default: "" },
+      phone: {
+        type: String,
+        default: "",
+        validate: phoneValidator, // Use the external phone validator
+      },
+      email: {
+        type: String,
+        default: "",
+        validate: emailValidator, // Use the external email validator
+      },
+      relationship: { type: String, default: "" },
     },
-    email: {
-      type: String,
-      default: "",
-      validate: emailValidator, // Use the external email validator
+    set: function (value: any) {
+      // Ensure contactInfo is an object and contains at least cellPhone and workPhone
+      if (
+        typeof value !== "object" ||
+        value.firstName == null ||
+        value.lastName == null ||
+        value.phone == null ||
+        value.email == null ||
+        value.relationship == null
+      ) {
+        throw new Error("Invalid emergencyContact format.");
+      }
+      return value;
     },
-    relationship: { type: String, default: "" },
   },
-  documents: [
-    {
-      name: { type: String, default: "" },
-      url: { type: String, default: "" },
-    },
-  ],
+  documents: {
+    profilePictureUrl: { type: String, default: "" },
+    driverLicenseUrl: { type: String, default: "" },
+  },
 });
 
 // Create and export the Employee model

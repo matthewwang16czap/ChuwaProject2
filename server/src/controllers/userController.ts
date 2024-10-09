@@ -6,7 +6,9 @@ import jwt from "jsonwebtoken";
 
 interface IPayload {
   user: {
+    userId: string | null | undefined;
     role: string;
+    email: string;
     employeeId?: string | null | undefined;
     applicationId?: string | null | undefined;
   };
@@ -36,7 +38,7 @@ export const login: RequestHandler = async (
     }
 
     // Create JWT payload
-    const payload: IPayload = { user: { role: user.role } };
+    const payload: IPayload = { user: { userId: user._id?.toString(), role: user.role, email: user.email } };
 
     // Get employeeId and applicationId if the user is not an HR
     if (user.role !== "HR") {
@@ -66,11 +68,11 @@ export const changePassword: RequestHandler = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { username, oldPassword, newPassword } = req.body;
+  const { oldPassword, newPassword } = req.body;
 
   try {
     // Check if the user exists
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ email: req?.user?.email });
     if (!user) {
       res.status(400).json({ message: "User not found." });
       return;
