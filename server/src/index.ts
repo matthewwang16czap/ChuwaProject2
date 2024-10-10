@@ -6,12 +6,19 @@ import registrationRouter from './routers/registrationRouter';
 import applicationRouter from './routers/applicationRouter';
 import employeeRouter from './routers/employeeRouter';
 import errorHandler from './middlewares/errorHandler';
+import cors from 'cors';
+
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5001;
 
 connectDB();
+
+app.use(cors({
+  origin: 'http://localhost:3001', // Replace with your frontend origin
+  credentials: true, // If you need to send cookies or authentication headers
+}));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
