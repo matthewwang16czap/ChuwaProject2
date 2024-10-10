@@ -55,8 +55,8 @@ export const sendInvitation = async (
     registration.registrationHistory.push({ token });
     registration.save();
     res.status(200).send({ message: "invitation is sent", registration });
-  } catch (err) {
-    res.status(500).send({ message: "error sending mail", err });
+  } catch (error) {
+    res.status(500).send({ message: "error sending mail", error });
   }
 };
 
@@ -95,8 +95,8 @@ export const register = async (
     await Registration.findOneAndUpdate({ email }, { userId: newUser._id });
     // Return success
     res.status(201).json({ message: "Register successful!" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Register failed.", err });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Register failed.", error });
   }
 };
