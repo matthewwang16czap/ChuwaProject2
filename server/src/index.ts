@@ -31,11 +31,6 @@ app.use('/api/registration', registrationRouter);
 app.use('/api/application', applicationRouter);
 app.use('/api/employee', employeeRouter);
 
-
-app.get("/", (req: Request, res: Response) => {
-  res.send("Hello, TypeScript Express!");
-});
-
 // Use the error handler middleware after all routes
 app.use(errorHandler);
 
