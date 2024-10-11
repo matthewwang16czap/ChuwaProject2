@@ -17,7 +17,7 @@ const port = process.env.PORT || 5001;
 connectDB();
 
 app.use(cors({
-  origin: 'http://localhost:3001', // Replace with your frontend origin
+  origin: process.env.FRONTEND_URL, 
   credentials: true, // If you need to send cookies or authentication headers
 }));
 
