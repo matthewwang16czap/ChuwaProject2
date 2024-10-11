@@ -1,24 +1,25 @@
-// src/api/axiosInstance.ts
+import axios from "axios";
+import dotenv from "dotenv";
 
-import axios from 'axios';
+dotenv.config();
 
 const axiosInstance = axios.create({
-    baseURL: 'http://localhost:4000',
-  });
+  baseURL: process.env.BACKEND_URL,
+});
 
 // Add a request interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
 
     if (token) {
-      config.headers!['Authorization'] = `Bearer ${token}`;
+      config.headers!["Authorization"] = `Bearer ${token}`;
     }
 
     return config;
   },
   (error) => {
-    Promise.reject(error);
+    return Promise.reject(error);
   }
 );
 

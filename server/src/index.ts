@@ -17,7 +17,7 @@ const port = process.env.PORT || 5001;
 connectDB();
 
 app.use(cors({
-  origin: 'http://localhost:3001', // Replace with your frontend origin
+  origin: process.env.FRONTEND_URL, 
   credentials: true, // If you need to send cookies or authentication headers
 }));
 
@@ -30,11 +30,6 @@ app.use('/api/user', userRouter);
 app.use('/api/registration', registrationRouter);
 app.use('/api/application', applicationRouter);
 app.use('/api/employee', employeeRouter);
-
-
-app.get("/", (req: Request, res: Response) => {
-  res.send("Hello, TypeScript Express!");
-});
 
 // Use the error handler middleware after all routes
 app.use(errorHandler);
