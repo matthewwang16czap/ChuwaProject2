@@ -6,6 +6,7 @@ import registrationRouter from './routers/registrationRouter';
 import applicationRouter from './routers/applicationRouter';
 import employeeRouter from './routers/employeeRouter';
 import errorHandler from './middlewares/errorHandler';
+import { verifyToken, verifyHR } from "./middlewares/tokenAuth";
 dotenv.config();
 
 const app = express();
@@ -15,6 +16,8 @@ connectDB();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use('/documents', verifyToken, verifyHR, express.static(`${__dirname}/documents`));
 
 app.use('/api/user', userRouter);
 app.use('/api/registration', registrationRouter);
