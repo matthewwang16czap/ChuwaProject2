@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
-import User from "../models/User"; 
+import User from "../models/User";
 import Employee from "../models/Employee";
 import Application from "../models/Application";
-import Registration from "../models/Registration"; 
+import Registration from "../models/Registration";
 import nodemailer from "nodemailer";
 import * as EmailValidator from "email-validator";
 import dotenv from "dotenv";
@@ -98,5 +98,65 @@ export const register = async (
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Register failed.", error });
+  }
+};
+
+export const getRegistrationHistoryById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const { registrationId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(registrationId)) {
+    res.status(400).json({ message: "Invalid ID format" });
+    return;
+  }
+
+  try {
+    const registration = await Registration.findById(registrationId);
+    if (!registration) {
+      res.status(404).json({ message: "Registration history not found" });
+      return;
+    }
+
+    res.status(200).json({
+      message: "Registration fetched",
+      registrationHistory: registration.registrationHistory,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error retrieving registration history", error });
+  }
+};
+
+export const getRegistrationHistoryByEmail = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const { email } = req.body;
+
+  if (!email) {
+    res.status(400).json({ message: "No email provided" });
+    return;
+  }
+
+  try {
+    const registration = await Registration.findOne({email});
+    if (!registration) {
+      res.status(404).json({ message: "Registration history not found" });
+      return;
+    }
+
+    res.status(200).json({
+      message: "Registration fetched",
+      registrationHistory: registration.registrationHistory,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error retrieving registration history", error });
   }
 };

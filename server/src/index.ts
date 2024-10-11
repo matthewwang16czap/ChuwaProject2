@@ -7,6 +7,7 @@ import applicationRouter from './routers/applicationRouter';
 import employeeRouter from './routers/employeeRouter';
 import errorHandler from './middlewares/errorHandler';
 import cors from 'cors';
+import { verifyToken, verifyHR } from "./middlewares/tokenAuth";
 
 dotenv.config();
 
@@ -22,6 +23,8 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use('/documents', verifyToken, verifyHR, express.static(`${__dirname}/documents`));
 
 app.use('/api/user', userRouter);
 app.use('/api/registration', registrationRouter);
