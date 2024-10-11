@@ -34,7 +34,6 @@ interface IWorkAuthorization {
   documents?: IDocument[];
 }
 
-// Define the application interface
 export interface IApplication extends Document {
   employeeId: Schema.Types.ObjectId;
   email: string;
@@ -82,7 +81,6 @@ export interface IApplication extends Document {
   feedback?: string;
 }
 
-// Define the Application schema
 const ApplicationSchema: Schema = new Schema({
   employeeId: {
     type: Schema.Types.ObjectId,
