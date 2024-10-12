@@ -4,7 +4,7 @@ import axios from "axios";
 // dotenv.config();
 
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:5000' //process.env.BACKEND_URL,
+  baseURL: process.env.BACKEND_URL || 'http://localhost:5000',
 });
 
 // Add a request interceptor
