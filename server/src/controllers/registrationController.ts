@@ -43,6 +43,7 @@ export const sendInvitation = async (
     subject: "registration email",
     text: `Please use the following link to complete your registration: ${process.env.FRONTEND_URL}/register?token=${token}`,
   };
+  console.log(`Please use the following link to complete your registration: ${process.env.FRONTEND_URL}/register?token=${token}`);
   try {
     await transporter.sendMail(mailOptions);
     // Add to registration history
@@ -56,6 +57,7 @@ export const sendInvitation = async (
     registration.save();
     res.status(200).send({ message: "invitation is sent", registration });
   } catch (error) {
+    //console.log(error);
     res.status(500).send({ message: "error sending mail", error });
   }
 };
