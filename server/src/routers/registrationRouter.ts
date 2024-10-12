@@ -1,3 +1,4 @@
+
 import express from "express";
 import {
   sendInvitation,
@@ -6,6 +7,7 @@ import {
   getRegistrationHistoryByEmail,
 } from "../controllers/registrationController";
 import { verifyToken, verifyHR } from "../middlewares/tokenAuth";
+
 
 const router = express.Router();
 

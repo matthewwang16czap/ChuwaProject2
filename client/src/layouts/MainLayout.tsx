@@ -3,7 +3,7 @@
 import React from 'react';
 import { Layout, Menu } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
+import {jwtDecode} from 'jwt-decode';
 
 const { Header, Content, Footer } = Layout;
 
@@ -17,7 +17,6 @@ interface JwtPayload {
     role: string;
     email: string;
   };
-  // Add other fields from your JWT payload as needed
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
@@ -72,16 +71,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             label: <Link to="/employeeList">Employee List</Link>,
           },
           {
-            key: '/onboarding',
-            label: <Link to="/onboarding">Onboarding</Link>,
+            key: '/send-invitation',
+            label: <Link to="/send-invitation">Send Invitation</Link>,
           },
-          {
-            key: '/personalInfo',
-            label: <Link to="/personalInfo">Personal Info</Link>,
-          }
           // Add more HR-specific menu items here
         ]
       : []),
+    {
+      key: '/change-password',
+      label: <Link to="/change-password">Change Password</Link>,
+    },
     {
       key: '/logout',
       label: <Link to="/logout">Logout</Link>,
