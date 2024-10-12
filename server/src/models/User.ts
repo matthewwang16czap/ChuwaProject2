@@ -2,7 +2,6 @@ import mongoose, { Schema, Document } from "mongoose";
 import bcrypt from "bcrypt";
 
 const saltRounds = 10; // The number of salt rounds for bcrypt
-
 // Define an interface for the User model
 interface IUser extends Document {
   username: string;
