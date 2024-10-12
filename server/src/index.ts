@@ -6,6 +6,9 @@ import registrationRouter from './routers/registrationRouter';
 import applicationRouter from './routers/applicationRouter';
 import employeeRouter from './routers/employeeRouter';
 import errorHandler from './middlewares/errorHandler';
+import cors from 'cors';
+import { verifyToken, verifyHR } from "./middlewares/tokenAuth";
+
 dotenv.config();
 
 const app = express();
@@ -13,18 +16,20 @@ const port = process.env.PORT || 5001;
 
 connectDB();
 
+app.use(cors({
+  origin: process.env.FRONTEND_URL, 
+  credentials: true, // If you need to send cookies or authentication headers
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use('/documents', verifyToken, verifyHR, express.static(`${__dirname}/documents`));
 
 app.use('/api/user', userRouter);
 app.use('/api/registration', registrationRouter);
 app.use('/api/application', applicationRouter);
 app.use('/api/employee', employeeRouter);
-
-
-app.get("/", (req: Request, res: Response) => {
-  res.send("Hello, TypeScript Express!");
-});
 
 // Use the error handler middleware after all routes
 app.use(errorHandler);
