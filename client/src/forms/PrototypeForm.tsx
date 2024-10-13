@@ -1,7 +1,7 @@
 // PrototypeForm.tsx
 
 import React from 'react';
-import { useFormContext, FormProvider, Controller } from 'react-hook-form';
+import { useFormContext, Controller } from 'react-hook-form';
 import {
   Form,
   Input,
@@ -18,6 +18,7 @@ interface Field {
   name: string;
   label: string;
   type: string;
+  inputType?: string;
   options?: { label: string; value: string }[];
   validation?: any;
   disabled?: boolean;
@@ -53,7 +54,7 @@ const PrototypeForm: React.FC<PrototypeFormProps> = ({
       .reduce((obj, key) => (obj ? obj[key] : undefined), errorObj);
   };
 
-  const content = (
+  return (
     <Form
       layout="vertical"
       onFinish={onSubmit ? handleSubmit(onSubmit) : undefined}
@@ -61,6 +62,7 @@ const PrototypeForm: React.FC<PrototypeFormProps> = ({
     >
       {fields.map((field) => {
         const error = getNestedError(errors, field.name);
+
         switch (field.type) {
           case 'input':
             return (
@@ -74,18 +76,34 @@ const PrototypeForm: React.FC<PrototypeFormProps> = ({
                   name={field.name}
                   control={control}
                   rules={field.validation}
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <Input
-                      onChange={onChange}
-                      onBlur={onBlur}
-                      value={value}
-                      disabled={field.disabled}
-                      placeholder={field.label}
-                    />
-                  )}
+                  render={({ field: { onChange, onBlur, value } }) => {
+                    if (field.inputType === 'password') {
+                      return (
+                        <Input.Password
+                          onChange={onChange}
+                          onBlur={onBlur}
+                          value={value}
+                          disabled={field.disabled}
+                          placeholder={field.label}
+                        />
+                      );
+                    } else {
+                      return (
+                        <Input
+                          type={field.inputType || 'text'}
+                          onChange={onChange}
+                          onBlur={onBlur}
+                          value={value}
+                          disabled={field.disabled}
+                          placeholder={field.label}
+                        />
+                      );
+                    }
+                  }}
                 />
               </Form.Item>
             );
+
           case 'select':
             return (
               <Form.Item
@@ -112,6 +130,7 @@ const PrototypeForm: React.FC<PrototypeFormProps> = ({
                 />
               </Form.Item>
             );
+
           case 'radio':
             return (
               <Form.Item
@@ -136,6 +155,7 @@ const PrototypeForm: React.FC<PrototypeFormProps> = ({
                 />
               </Form.Item>
             );
+
           case 'date':
             return (
               <Form.Item
@@ -166,6 +186,7 @@ const PrototypeForm: React.FC<PrototypeFormProps> = ({
                 />
               </Form.Item>
             );
+
           case 'upload':
             return (
               <Form.Item
@@ -208,6 +229,7 @@ const PrototypeForm: React.FC<PrototypeFormProps> = ({
                 />
               </Form.Item>
             );
+
           default:
             return null;
         }
@@ -221,13 +243,6 @@ const PrototypeForm: React.FC<PrototypeFormProps> = ({
       )}
     </Form>
   );
-
-  // If methods are provided, wrap the form with FormProvider
-  if (methods) {
-    return <FormProvider {...methods}>{content}</FormProvider>;
-  }
-
-  return content;
 };
 
 export default PrototypeForm;

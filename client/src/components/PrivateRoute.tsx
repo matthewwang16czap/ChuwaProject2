@@ -29,9 +29,10 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, roles = [] }) => 
   try {
     // Decode the token to get user information
     const decoded = jwtDecode<JwtPayload>(token);
-    console.log(decoded);
+    //console.log(decoded);
     const userRole = decoded.user.role;
-
+    console.log(userRole);
+    console.log(roles);
     if (roles.length > 0 && !roles.includes(userRole)) {
       // User does not have the required role
       return <Navigate to="/unauthorized" replace />;

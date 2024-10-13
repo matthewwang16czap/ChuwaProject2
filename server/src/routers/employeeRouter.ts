@@ -13,7 +13,7 @@ import {
 
 const router = express.Router();
 
-router.post("/update", verifyToken, verifyEmployee, updateEmployee);
+router.put("/update", verifyToken, verifyEmployee, updateEmployee);
 router.get("/all", verifyToken, verifyHR, getAllEmployees);
 router.get("/search", verifyToken, verifyHR, searchEmployees);
 router.get("/:employeeId", verifyToken, verifyHR, getEmployee);

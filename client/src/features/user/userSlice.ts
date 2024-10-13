@@ -1,23 +1,25 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
+import axiosInstance from "../../api/axiosInstance";
 import { jwtDecode } from "jwt-decode"; // Import jwt-decode to decode JWT tokens
 const API_URL = "/api/user";
 
 // Define the JWT payload interface
 interface IPayload {
-  role: string;
-  employeeId?: string;
-  applicationId?: string;
+  user: {
+    userId: string | null | undefined;
+    role: string;
+    email: string;
+    employeeId?: string | null | undefined;
+    applicationId?: string | null | undefined;
+  };
 }
 
 // Define state types
 interface UserState {
-  isAuthenticated: boolean;
-  role: string | null;
-  employeeId: string | null;
-  applicationId: string | null;
-  loginStatus: "idle" | "loading" | "succeeded" | "failed";
-  passwordChangeStatus: "idle" | "loading" | "succeeded" | "failed";
+  user: IPayload["user"] | null;
+  loginStatus: "loading" | "succeeded" | "failed" | null;
+  passwordChangeStatus: "loading" | "succeeded" | "failed" | null;
   error: string | null;
 }
 
@@ -28,19 +30,15 @@ interface LoginPayload {
 }
 
 interface PasswordChangePayload {
-  username: string;
   oldPassword: string;
   newPassword: string;
 }
 
 // Initial state
 const initialState: UserState = {
-  isAuthenticated: false,
-  role: null,
-  employeeId: null,
-  applicationId: null,
-  loginStatus: "idle",
-  passwordChangeStatus: "idle",
+  user: null,
+  loginStatus: null,
+  passwordChangeStatus: null,
   error: null,
 };
 
@@ -65,14 +63,13 @@ export const login = createAsyncThunk<
   { rejectValue: string } // Rejection error type
 >("user/login", async (loginData, { rejectWithValue }) => {
   try {
-    const response = await axios.post(`${API_URL}/login`, loginData);
+    const response = await axiosInstance.post(`${API_URL}/login`, loginData);
     const token = response.data.token;
-
     // Store the token in localStorage
     localStorage.setItem("jwtToken", token);
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
-      return rejectWithValue(err.response.data.message);
+      return rejectWithValue(err.response.data);
     }
     return rejectWithValue("Unknown error occurred during login.");
   }
@@ -85,10 +82,10 @@ export const changeUserPassword = createAsyncThunk<
   { rejectValue: string } // Rejection error type
 >("user/changePassword", async (passwordData, { rejectWithValue }) => {
   try {
-    await axios.post(`${API_URL}/changepassword`, passwordData);
+    await axiosInstance.post(`${API_URL}/changepassword`, passwordData);
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
-      return rejectWithValue(err.response.data.message);
+      return rejectWithValue(err.response.data);
     }
     return rejectWithValue("Unknown error occurred during password change.");
   }
@@ -99,26 +96,17 @@ const userSlice = createSlice({
   initialState,
   reducers: {
     logout: (state) => {
-      state.isAuthenticated = false;
-      state.role = null;
-      state.employeeId = null;
-      state.applicationId = null;
-
+      state.user = null;
+      state.loginStatus = null;
       // Remove the token from localStorage
       localStorage.removeItem("jwtToken");
     },
     checkAuth: (state) => {
       const decodedToken = decodeToken();
       if (decodedToken) {
-        state.isAuthenticated = true;
-        state.role = decodedToken.role;
-        state.employeeId = decodedToken.employeeId || null;
-        state.applicationId = decodedToken.applicationId || null;
+        state.user = decodedToken.user;
       } else {
-        state.isAuthenticated = false;
-        state.role = null;
-        state.employeeId = null;
-        state.applicationId = null;
+        state.user = null;
       }
     },
   },
@@ -133,18 +121,19 @@ const userSlice = createSlice({
         // Upon successful login, check auth to decode and set user state
         const decodedToken = decodeToken();
         if (decodedToken) {
-          state.isAuthenticated = true;
-          state.role = decodedToken.role;
-          state.employeeId = decodedToken.employeeId || null;
-          state.applicationId = decodedToken.applicationId || null;
-        }
-        state.loginStatus = "succeeded";
+          state.user = decodedToken.user;
+          state.loginStatus = "succeeded";
+        } else {
+          state.user = null;
+          state.loginStatus = "failed";
+          state.error = "Unknown error";
+        }     
       })
       .addCase(
         login.rejected,
         (state, action: PayloadAction<string | undefined>) => {
           state.loginStatus = "failed";
-          state.error = action.payload ?? "Unknown error";
+          state.error = action.payload as string ?? "Unknown error";
         }
       );
 
@@ -161,7 +150,7 @@ const userSlice = createSlice({
         changeUserPassword.rejected,
         (state, action: PayloadAction<string | undefined>) => {
           state.passwordChangeStatus = "failed";
-          state.error = action.payload ?? "Unknown error";
+          state.error = action.payload as string ?? "Unknown error";
         }
       );
   },

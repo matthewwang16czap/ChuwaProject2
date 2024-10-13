@@ -9,15 +9,23 @@ import PersonalInfoPage from './pages/PersonalInfoPage';
 import Logout from './components/Logout';
 import LoginPage from './pages/LoginPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
-import PrivateRoute from './components/PrivateRoute'; // Import the updated PrivateRoute component
+import SendInvitationPage from './pages/SendInvitationPage';
+import RegisterPage from './pages/RegisterPage';
+import ChangePassword from './pages/ChangePassword'; // Import the ChangePassword page
+import PrivateRoute from './components/PrivateRoute';
+import { Provider } from 'react-redux';
+import store from './app/store';
 
 function App() {
   return (
+    <Provider store={store}>
+
     <Router>
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
+        <Route path="/register" element={<RegisterPage />} />
 
         {/* Logout Route */}
         <Route path="/logout" element={<Logout />} />
@@ -30,6 +38,16 @@ function App() {
             <PrivateRoute roles={['Employee', 'HR']}>
               <MainLayout>
                 <HomePage />
+              </MainLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/change-password"
+          element={
+            <PrivateRoute roles={['Employee', 'HR']}>
+              <MainLayout>
+                <ChangePassword />
               </MainLayout>
             </PrivateRoute>
           }
@@ -69,11 +87,23 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/send-invitation"
+          element={
+            <PrivateRoute roles={['HR']}>
+              <MainLayout>
+                <SendInvitationPage />
+              </MainLayout>
+            </PrivateRoute>
+          }
+        />
 
         {/* Catch-All Route */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
+    </Provider>
+
   );
 }
 

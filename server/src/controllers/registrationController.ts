@@ -56,6 +56,7 @@ export const sendInvitation = async (
     registration.save();
     res.status(200).send({ message: "invitation is sent", registration });
   } catch (error) {
+    //console.log(error);
     res.status(500).send({ message: "error sending mail", error });
   }
 };
