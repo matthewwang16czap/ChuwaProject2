@@ -33,9 +33,9 @@ interface RegistrationHistoryResponse {
 
 // Define types for the slice's state
 interface RegistrationState {
-  invitationStatus: "idle" | "loading" | "succeeded" | "failed" | null;
-  registrationStatus: "idle" | "loading" | "succeeded" | "failed" | null;
-  registrationHistoryStatus: "idle" | "loading" | "succeeded" | "failed" | null;
+  invitationStatus: "loading" | "succeeded" | "failed" | null;
+  registrationStatus: "loading" | "succeeded" | "failed" | null;
+  registrationHistoryStatus: "loading" | "succeeded" | "failed" | null;
   registrationHistory: RegistrationHistoryDocument[] | null;
   error: string | null;
 }
@@ -139,7 +139,7 @@ const registrationSlice = createSlice({
         sendInvitation.rejected,
         (state, action: PayloadAction<string | undefined>) => {
           state.invitationStatus = "failed";
-          state.error = action.payload ?? "Unknown error";
+          state.error = action.payload as string ?? "Unknown error";
         }
       )
       .addCase(register.pending, (state) => {
@@ -152,7 +152,7 @@ const registrationSlice = createSlice({
         register.rejected,
         (state, action: PayloadAction<string | undefined>) => {
           state.registrationStatus = "failed";
-          state.error = action.payload ?? "Unknown error";
+          state.error = action.payload as string ?? "Unknown error";
         }
       )
       .addCase(getRegistrationHistory.pending, (state) => {
@@ -169,7 +169,7 @@ const registrationSlice = createSlice({
         getRegistrationHistory.rejected,
         (state, action: PayloadAction<string | undefined>) => {
           state.registrationHistoryStatus = "failed";
-          state.error = action.payload ?? "Unknown error";
+          state.error = action.payload as string ?? "Unknown error";
         }
       );
   },
