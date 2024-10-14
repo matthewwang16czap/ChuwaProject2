@@ -1,11 +1,12 @@
 // src/pages/RegisterPage.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {jwtDecode} from 'jwt-decode';
 import { useForm } from 'react-hook-form';
-import axiosInstance from '../api/axiosInstance';
-import axios from 'axios';
+import { useDispatch, useSelector } from 'react-redux';
+import { register } from '../features/registration/registrationSlice'; // Adjust the path as needed
+import { RootState } from '../app/store'; // Adjust the path as needed
 import PrototypeForm from '../forms/PrototypeForm';
 
 interface JwtPayload {
@@ -15,27 +16,13 @@ interface JwtPayload {
 }
 
 const RegisterPage: React.FC = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+  const { registrationStatus, error } = useSelector((state: RootState) => state.registration);
 
-  const [token, setToken] = useState<string | null>(null);
-  const [email, setEmail] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const methods = useForm({
-    defaultValues: {
-      email: email || '',
-    },
-  });
-
-  // Update default values when email changes
-  useEffect(() => {
-    methods.reset({
-      email: email || '',
-    });
-  }, [email, methods]);
+  const [token, setToken] = React.useState<string | null>(null);
+  const [email, setEmail] = React.useState<string | null>(null);
 
   // Extract token from URL query parameters
   useEffect(() => {
@@ -51,55 +38,57 @@ const RegisterPage: React.FC = () => {
         if (userEmail) {
           setEmail(userEmail);
         } else {
-          setError('Invalid token: email not found.');
+          methods.setError('email', { type: 'manual', message: 'Invalid token: email not found.' });
         }
       } catch (err) {
         console.error('Error decoding token:', err);
-        setError('Invalid token.');
+        methods.setError('email', { type: 'manual', message: 'Invalid token.' });
       }
     } else {
-      setError('Invalid or missing token.');
+      methods.setError('email', { type: 'manual', message: 'Invalid or missing token.' });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
 
-  const onSubmit = async (data: any) => {
-    setMessage(null);
-    setError(null);
+  const methods = useForm({
+    defaultValues: {
+      email: email || '',
+    },
+  });
 
+  // Update default values when email changes
+  useEffect(() => {
+    methods.reset({
+      email: email || '',
+    });
+  }, [email, methods]);
+
+  const loading = registrationStatus === 'loading';
+
+  const onSubmit = (data: any) => {
     if (data.password !== data.confirmPassword) {
-      setError('Passwords do not match.');
+      methods.setError('confirmPassword', { type: 'manual', message: 'Passwords do not match.' });
       return;
     }
 
-    setLoading(true);
-
-    try {
-      const response = await axiosInstance.post('/api/registration/register', {
-        email: email,
+    dispatch(
+      register({
+        email: email!,
         username: data.username,
         password: data.password,
-        token: token,
-      });
+        token: token!,
+      })
+    );
+  };
 
-      setMessage('Registration successful! Redirecting to login page...');
+  useEffect(() => {
+    if (registrationStatus === 'succeeded') {
       // Redirect to login page after a short delay
       setTimeout(() => {
         navigate('/login');
       }, 3000);
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response) {
-          setError(error.response.data.message || 'Error during registration.');
-        } else {
-          setError('Network error. Please try again later.');
-        }
-      } else {
-        setError('An unexpected error occurred. Please try again later.');
-      }
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [registrationStatus, navigate]);
 
   // Define form fields
   const fields = [
@@ -117,18 +106,18 @@ const RegisterPage: React.FC = () => {
       validation: { required: 'Username is required' },
     },
     {
-        name: 'password',
-        label: 'Password',
-        type: 'input', // Change type to 'input'
-        inputType: 'password', // Add inputType
-        validation: { required: 'Password is required' },
-      },
-      {
-        name: 'confirmPassword',
-        label: 'Confirm Password',
-        type: 'input', // Change type to 'input'
-        inputType: 'password', // Add inputType
-        validation: { required: 'Confirm your password' },
+      name: 'password',
+      label: 'Password',
+      type: 'input',
+      inputType: 'password',
+      validation: { required: 'Password is required' },
+    },
+    {
+      name: 'confirmPassword',
+      label: 'Confirm Password',
+      type: 'input',
+      inputType: 'password',
+      validation: { required: 'Confirm your password' },
     },
   ];
 
@@ -136,8 +125,16 @@ const RegisterPage: React.FC = () => {
     <div className="max-w-md mx-auto mt-10 p-6 border rounded shadow">
       <h2 className="text-2xl font-bold mb-4 text-center">Employee Registration</h2>
       {email && <p className="text-center mb-4">Hello, {email}</p>}
-      {message && <div className="mb-4 text-green-600 text-center">{message}</div>}
-      {error && <div className="mb-4 text-red-600 text-center">{error}</div>}
+      {registrationStatus === 'succeeded' && (
+        <div className="mb-4 text-green-600 text-center">
+          Registration successful! Redirecting to login page...
+        </div>
+      )}
+      {registrationStatus === 'failed' && error && (
+        <div className="mb-4 text-red-600 text-center">
+          {typeof error === 'string' ? error : JSON.stringify(error)}
+        </div>
+      )}
       {token && email ? (
         <PrototypeForm
           fields={fields}
