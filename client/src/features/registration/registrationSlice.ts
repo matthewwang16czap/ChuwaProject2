@@ -51,9 +51,9 @@ const initialState: RegistrationState = {
 
 // AsyncThunk to send an invitation
 export const sendInvitation = createAsyncThunk<
-  void, // Return type
-  InvitationPayload, // Argument type
-  { rejectValue: string } // Reject value type
+  void,
+  InvitationPayload,
+  { rejectValue: string }
 >(
   "registration/sendInvitation",
   async (invitationData, { rejectWithValue }) => {
@@ -61,7 +61,10 @@ export const sendInvitation = createAsyncThunk<
       await axiosInstance.post(`${API_URL}/sendinvitation`, invitationData);
     } catch (err: unknown) {
       if (err instanceof AxiosError && err.response) {
-        return rejectWithValue(err.response.data);
+        const errorData = err.response.data;
+        const errorMessage =
+          errorData.message || errorData.error || "Error sending invitation.";
+        return rejectWithValue(errorMessage);
       }
       return rejectWithValue("Unknown error occurred");
     }
@@ -70,17 +73,19 @@ export const sendInvitation = createAsyncThunk<
 
 // AsyncThunk to register a user
 export const register = createAsyncThunk<
-  void, // Return type
-  RegistrationPayload, // Argument type
-  { rejectValue: string } // Reject value type
->("registration/register", async (registrationData, { rejectWithValue }) => {
+  void,
+  RegistrationPayload,
+  { rejectValue: string }
+>('registration/register', async (registrationData, { rejectWithValue }) => {
   try {
     await axiosInstance.post(`${API_URL}/register`, registrationData);
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
-      return rejectWithValue(err.response.data);
+      const errorData = err.response.data;
+      const errorMessage = errorData.message || errorData.error || 'Error during registration.';
+      return rejectWithValue(errorMessage);
     }
-    return rejectWithValue("Unknown error occurred");
+    return rejectWithValue('Unknown error occurred');
   }
 });
 
