@@ -1,22 +1,24 @@
-// src/pages/LoginPage.tsx
-
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import PrototypeForm from '../forms/PrototypeForm';
 import { useDispatch, useSelector } from 'react-redux';
-import { login } from '../features/user/userSlice'; // Adjust the path as needed
-import { RootState } from '../app/store'; // Adjust the path as needed
+import { login } from '../features/user/userSlice'; 
+import { RootState, AppDispatch } from '../app/store'; 
+
+interface LoginFormInputs {
+  username: string;
+  password: string;
+}
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
 
   const { loginStatus, error } = useSelector((state: RootState) => state.user);
+  const methods = useForm<LoginFormInputs>();
 
-  const methods = useForm();
-
-  const onSubmit = (data: any) => {
+  const onSubmit: SubmitHandler<LoginFormInputs> = (data) => {
     dispatch(login(data));
   };
 
@@ -26,7 +28,6 @@ const LoginPage: React.FC = () => {
     }
   }, [loginStatus, navigate]);
 
-  // Define form fields
   const fields = [
     {
       name: 'username',
