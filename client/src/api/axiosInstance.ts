@@ -1,19 +1,14 @@
 import axios from "axios";
-import dotenv from "dotenv";
 
-dotenv.config();
-
-const axiosInstance = axios.create({
-  baseURL: process.env.BACKEND_URL || 'http://localhost:5000',
-});
+const axiosInstance = axios.create();
 
 // Add a request interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("jwtToken");
 
-    // Only add the Authorization header if the token exists and the request is not to the register endpoint
-    if (token && !config.url?.includes('/api/register')) {
+    // Only add the Authorization header if the token exists
+    if (token) {
         config.headers!["Authorization"] = `Bearer ${token}`;
     }
 

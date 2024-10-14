@@ -1,51 +1,47 @@
 // src/pages/ChangePassword.tsx
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import axiosInstance from '../api/axiosInstance';
-import axios from 'axios';
 import PrototypeForm from '../forms/PrototypeForm';
+import { useDispatch, useSelector } from 'react-redux';
+import { changeUserPassword } from '../features/user/userSlice'; // Adjust the path as needed
+import { RootState } from '../app/store'; // Adjust the path as needed
+import { useNavigate } from 'react-router-dom';
+import { Button } from 'antd';
 
 const ChangePassword: React.FC = () => {
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const { passwordChangeStatus, error } = useSelector((state: RootState) => state.user);
 
   const methods = useForm();
 
-  const onSubmit = async (data: any) => {
-    setMessage(null);
-    setError(null);
-    setLoading(true);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
 
+  const onSubmit = (data: any) => {
     if (data.newPassword !== data.confirmNewPassword) {
-      setError('New passwords do not match.');
-      setLoading(false);
+      methods.setError('confirmNewPassword', { type: 'manual', message: 'Passwords do not match.' });
       return;
     }
 
-    try {
-      const response = await axiosInstance.post('/api/user/changepassword', {
+    setNewPassword(data.newPassword);
+
+    dispatch(
+      changeUserPassword({
         oldPassword: data.oldPassword,
         newPassword: data.newPassword,
-      });
-
-      setMessage('Password updated successfully.');
-      methods.reset();
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response) {
-          setError(error.response.data.message || 'Error changing password.');
-        } else {
-          setError('Network error. Please try again later.');
-        }
-      } else {
-        setError('An unexpected error occurred. Please try again later.');
-      }
-    } finally {
-      setLoading(false);
-    }
+      })
+    );
   };
+
+  useEffect(() => {
+    if (passwordChangeStatus === 'succeeded') {
+      setShowConfirmation(true);
+      methods.reset();
+    }
+  }, [passwordChangeStatus, methods]);
 
   // Define form fields
   const fields = [
@@ -72,16 +68,32 @@ const ChangePassword: React.FC = () => {
     },
   ];
 
+  if (showConfirmation) {
+    return (
+      <div className="max-w-md mx-auto mt-10 p-6 border rounded shadow text-center">
+        <h2 className="text-2xl font-bold mb-4">Password Changed Successfully</h2>
+        <p className="mb-4">Your new password is:</p>
+        <p className="mb-4 font-mono text-lg">{newPassword}</p>
+        <Button type="primary" onClick={() => navigate('/')}>
+          Go to Home
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-md mx-auto mt-10 p-6 border rounded shadow">
       <h2 className="text-2xl font-bold mb-4 text-center">Change Password</h2>
-      {message && <div className="mb-4 text-green-600 text-center">{message}</div>}
-      {error && <div className="mb-4 text-red-600 text-center">{error}</div>}
+      {error && (
+        <div className="mb-4 text-red-600 text-center">{error}</div>
+      )}
       <PrototypeForm
         fields={fields}
         onSubmit={onSubmit}
         methods={methods}
-        submitButtonLabel={loading ? 'Changing Password...' : 'Change Password'}
+        submitButtonLabel={
+          passwordChangeStatus === 'loading' ? 'Changing Password...' : 'Change Password'
+        }
       />
     </div>
   );
