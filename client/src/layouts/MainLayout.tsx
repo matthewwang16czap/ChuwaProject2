@@ -3,7 +3,8 @@
 import React from 'react';
 import { Layout, Menu } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
-import {jwtDecode} from 'jwt-decode';
+import { useSelector } from 'react-redux';
+import { RootState } from '../app/store'; // Adjust the import path as needed
 
 const { Header, Content, Footer } = Layout;
 
@@ -11,31 +12,13 @@ interface MainLayoutProps {
   children: React.ReactNode;
 }
 
-interface JwtPayload {
-  user: {
-    userId: string | null | undefined;
-    role: string;
-    email: string;
-  };
-}
-
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const location = useLocation();
 
-  // Get the token from localStorage
-  const token = localStorage.getItem('token');
-  let role = '';
+  // Access user from Redux store
+  const user = useSelector((state: RootState) => state.user.user);
 
-  if (token) {
-    try {
-      // Decode the token to extract user role
-      const decoded = jwtDecode<JwtPayload>(token);
-      role = decoded.user.role;
-    } catch (error) {
-      console.error('Error decoding token:', error);
-      // Handle token decoding errors if necessary
-    }
-  }
+  const role = user?.role || '';
 
   // Define menu items based on the user's role
   const menuItems = [
@@ -96,7 +79,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           style={{ float: 'left', color: '#fff', fontSize: '20px' }}
         >
           <Link to="/" style={{ color: '#fff' }}>
-            Employee Portal
+            Employee Management Portal
           </Link>
         </div>
         <Menu
