@@ -1,9 +1,8 @@
-// src/components/PrivateRoute.tsx
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { RootState } from '../app/store'; // Adjust the import path as needed
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '../app/store';
+import { checkAuth } from '../features/user/userSlice'; 
 
 interface PrivateRouteProps {
   children: JSX.Element;
@@ -11,18 +10,25 @@ interface PrivateRouteProps {
 }
 
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, roles = [] }) => {
-  // Access user from Redux store
-  const user = useSelector((state: RootState) => state.user.user);
+  const dispatch = useDispatch();
+  const { user } = useSelector((state: RootState) => state.user);
 
+  // Dispatch checkAuth on component mount
+  useEffect(() => {
+    if (!user) {
+      dispatch(checkAuth());
+    }
+  }, [user, dispatch]);
+
+  // If the user is not authenticated, redirect to login
   if (!user) {
-    // User is not authenticated
     return <Navigate to="/login" replace />;
   }
 
   const userRole = user.role;
 
+  // If the user does not have the required role, redirect to unauthorized page
   if (roles.length > 0 && !roles.includes(userRole)) {
-    // User does not have the required role
     return <Navigate to="/unauthorized" replace />;
   }
 

@@ -1,116 +1,86 @@
-// PrototypeForm.tsx
+import { Controller, UseFormReturn, FieldValues, Path } from "react-hook-form";
+import { Form, Input, Select, Radio, DatePicker, Upload, Button } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
+import { UploadFile, UploadFileStatus } from "antd/lib/upload/interface"; // Import UploadFile and UploadFileStatus
+import dayjs from "dayjs";
 
-import React from 'react';
-import { useFormContext, Controller } from 'react-hook-form';
-import {
-  Form,
-  Input,
-  Select,
-  Radio,
-  DatePicker,
-  Upload,
-  Button,
-} from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs'; // or import moment from 'moment';
-
-interface Field {
-  name: string;
+// Define the Field interface
+export interface Field<T extends FieldValues> {
+  name: Path<T>;
   label: string;
-  type: string;
+  type: "input" | "select" | "radio" | "date" | "upload";
   inputType?: string;
   options?: { label: string; value: string }[];
-  validation?: any;
+  validation?: Record<string, unknown>;
   disabled?: boolean;
 }
 
-interface PrototypeFormProps {
-  fields: Field[];
-  onSubmit?: (data: any) => void;
-  methods?: any;
+// Define the PrototypeFormProps interface
+interface PrototypeFormProps<T extends FieldValues> {
+  fields: Field<T>[];
+  onSubmit: (data: T) => void;
+  methods: UseFormReturn<T>;
   submitButtonLabel?: string;
 }
 
-const PrototypeForm: React.FC<PrototypeFormProps> = ({
+// Define the PrototypeForm component
+const PrototypeForm = <T extends FieldValues>({
   fields,
   onSubmit,
   methods,
-  submitButtonLabel = 'Submit',
-}) => {
-  const formMethods = methods || useFormContext();
-
+  submitButtonLabel = "Submit",
+}: PrototypeFormProps<T>): JSX.Element => {
   const {
     control,
     handleSubmit,
     formState: { errors },
-  } = formMethods;
-
-  const getNestedError = (errorObj: any, fieldName: string) => {
-    if (!fieldName || typeof fieldName !== 'string') {
-      return undefined;
-    }
-    return fieldName
-      .split('.')
-      .reduce((obj, key) => (obj ? obj[key] : undefined), errorObj);
-  };
+  } = methods;
 
   return (
     <Form
       layout="vertical"
-      onFinish={onSubmit ? handleSubmit(onSubmit) : undefined}
-      style={{ width: '100%' }}
+      onFinish={handleSubmit(onSubmit)}
+      style={{ width: "100%" }}
     >
       {fields.map((field) => {
-        const error = getNestedError(errors, field.name);
-
+        const error = errors ? errors[field.name] : null;
         switch (field.type) {
-          case 'input':
+          case "input":
             return (
               <Form.Item
                 key={field.name}
                 label={field.label}
-                validateStatus={error ? 'error' : ''}
-                help={error ? error.message : null}
+                validateStatus={error ? "error" : ""}
+                help={
+                  typeof error?.message === "string" ? error.message : undefined
+                }
               >
                 <Controller
                   name={field.name}
                   control={control}
                   rules={field.validation}
-                  render={({ field: { onChange, onBlur, value } }) => {
-                    if (field.inputType === 'password') {
-                      return (
-                        <Input.Password
-                          onChange={onChange}
-                          onBlur={onBlur}
-                          value={value}
-                          disabled={field.disabled}
-                          placeholder={field.label}
-                        />
-                      );
-                    } else {
-                      return (
-                        <Input
-                          type={field.inputType || 'text'}
-                          onChange={onChange}
-                          onBlur={onBlur}
-                          value={value}
-                          disabled={field.disabled}
-                          placeholder={field.label}
-                        />
-                      );
-                    }
-                  }}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <Input
+                      type={field.inputType || "text"}
+                      onChange={onChange}
+                      onBlur={onBlur}
+                      value={value}
+                      disabled={field.disabled}
+                      placeholder={field.label}
+                    />
+                  )}
                 />
               </Form.Item>
             );
-
-          case 'select':
+          case "select":
             return (
               <Form.Item
                 key={field.name}
                 label={field.label}
-                validateStatus={error ? 'error' : ''}
-                help={error ? error.message : null}
+                validateStatus={error ? "error" : ""}
+                help={
+                  typeof error?.message === "string" ? error.message : undefined
+                }
               >
                 <Controller
                   name={field.name}
@@ -130,14 +100,15 @@ const PrototypeForm: React.FC<PrototypeFormProps> = ({
                 />
               </Form.Item>
             );
-
-          case 'radio':
+          case "radio":
             return (
               <Form.Item
                 key={field.name}
                 label={field.label}
-                validateStatus={error ? 'error' : ''}
-                help={error ? error.message : null}
+                validateStatus={error ? "error" : ""}
+                help={
+                  typeof error?.message === "string" ? error.message : undefined
+                }
               >
                 <Controller
                   name={field.name}
@@ -155,14 +126,15 @@ const PrototypeForm: React.FC<PrototypeFormProps> = ({
                 />
               </Form.Item>
             );
-
-          case 'date':
+          case "date":
             return (
               <Form.Item
                 key={field.name}
                 label={field.label}
-                validateStatus={error ? 'error' : ''}
-                help={error ? error.message : null}
+                validateStatus={error ? "error" : ""}
+                help={
+                  typeof error?.message === "string" ? error.message : undefined
+                }
               >
                 <Controller
                   name={field.name}
@@ -172,41 +144,40 @@ const PrototypeForm: React.FC<PrototypeFormProps> = ({
                     const dateValue = value ? dayjs(value) : null;
                     return (
                       <DatePicker
-                        onChange={(date, dateString) => {
-                          onChange(dateString);
-                        }}
+                        onChange={(date, dateString) => onChange(dateString)}
                         onBlur={onBlur}
                         value={dateValue}
                         disabled={field.disabled}
                         format="YYYY-MM-DD"
-                        style={{ width: '100%' }}
+                        style={{ width: "100%" }}
                       />
                     );
                   }}
                 />
               </Form.Item>
             );
-
-          case 'upload':
+          case "upload":
             return (
               <Form.Item
                 key={field.name}
                 label={field.label}
-                validateStatus={error ? 'error' : ''}
-                help={error ? error.message : null}
+                validateStatus={error ? "error" : ""}
+                help={
+                  typeof error?.message === "string" ? error.message : undefined
+                }
               >
                 <Controller
                   name={field.name}
                   control={control}
                   rules={field.validation}
                   render={({ field: { onChange, value } }) => {
-                    const fileList = value
+                    const fileList: UploadFile[] = value
                       ? [
                           {
-                            uid: '-1',
-                            name: value.name || 'Uploaded File',
-                            status: 'done',
-                            url: value.url || '',
+                            uid: "-1",
+                            name: value.name || "Uploaded File",
+                            status: "done" as UploadFileStatus, // Cast status to UploadFileStatus
+                            url: value.url || "",
                           },
                         ]
                       : [];
@@ -215,32 +186,29 @@ const PrototypeForm: React.FC<PrototypeFormProps> = ({
                         fileList={fileList}
                         disabled={field.disabled}
                         beforeUpload={(file) => {
-                          onChange(file);
-                          return false;
+                          onChange(file); // Assign the uploaded file to the form field
+                          return false; // Prevent the actual upload
                         }}
-                        onRemove={() => {
-                          onChange(null);
-                        }}
+                        onRemove={() => onChange(null)} // Remove the file from the form
                       >
-                        <Button icon={<UploadOutlined />}>Click to Upload</Button>
+                        <Button icon={<UploadOutlined />}>
+                          Click to Upload
+                        </Button>
                       </Upload>
                     );
                   }}
                 />
               </Form.Item>
             );
-
           default:
             return null;
         }
       })}
-      {onSubmit && (
-        <Form.Item>
-          <Button type="primary" htmlType="submit">
-            {submitButtonLabel}
-          </Button>
-        </Form.Item>
-      )}
+      <Form.Item>
+        <Button type="primary" htmlType="submit">
+          {submitButtonLabel}
+        </Button>
+      </Form.Item>
     </Form>
   );
 };
