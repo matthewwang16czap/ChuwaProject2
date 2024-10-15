@@ -21,6 +21,7 @@ interface PrototypeFormProps<T extends FieldValues> {
   onSubmit: (data: T) => void;
   methods: UseFormReturn<T>;
   submitButtonLabel?: string;
+  showSubmitButton?: boolean; // New prop to control submit button visibility
 }
 
 // Define the PrototypeForm component
@@ -29,12 +30,14 @@ const PrototypeForm = <T extends FieldValues>({
   onSubmit,
   methods,
   submitButtonLabel = "Submit",
+  showSubmitButton = true, // Default to true
 }: PrototypeFormProps<T>): JSX.Element => {
   const {
     control,
     handleSubmit,
     formState: { errors },
   } = methods;
+
 
   return (
     <Form
@@ -204,11 +207,14 @@ const PrototypeForm = <T extends FieldValues>({
             return null;
         }
       })}
-      <Form.Item>
-        <Button type="primary" htmlType="submit">
-          {submitButtonLabel}
-        </Button>
-      </Form.Item>
+      {showSubmitButton && (
+        <Form.Item>
+          <Button type="primary" htmlType="submit">
+            {submitButtonLabel}
+          </Button>
+        </Form.Item>
+      )}
+
     </Form>
   );
 };

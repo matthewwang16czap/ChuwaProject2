@@ -11,7 +11,8 @@ import LoginPage from './pages/LoginPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import SendInvitationPage from './pages/SendInvitationPage';
 import RegisterPage from './pages/RegisterPage';
-import ChangePassword from './pages/ChangePassword'; // Import the ChangePassword page
+import ChangePassword from './pages/ChangePassword';
+import ProfilePage from './pages/ProfilePage'
 import PrivateRoute from './components/PrivateRoute';
 import { Provider } from 'react-redux';
 import store from './app/store';
@@ -52,6 +53,16 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute roles={['Employee', 'HR']}>
+              <MainLayout>
+                <ProfilePage />
+              </MainLayout>
+            </PrivateRoute>
+          }
+        />  
 
         {/* Employee-Only Routes */}
         <Route
