@@ -3,6 +3,8 @@ import { Form, Input, Select, Radio, DatePicker, Upload, Button } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { UploadFile, UploadFileStatus } from "antd/lib/upload/interface"; // Import UploadFile and UploadFileStatus
 import dayjs from "dayjs";
+import { useDispatch } from 'react-redux';
+import { uploadFileThunk } from '../features/application/applicationSlice'; // Adjust path
 
 // Define the Field interface
 export interface Field<T extends FieldValues> {
@@ -32,6 +34,7 @@ const PrototypeForm = <T extends FieldValues>({
   submitButtonLabel = "Submit",
   showSubmitButton = true, // Default to true
 }: PrototypeFormProps<T>): JSX.Element => {
+  const dispatch = useDispatch();
   const {
     control,
     handleSubmit,
@@ -164,10 +167,8 @@ const PrototypeForm = <T extends FieldValues>({
               <Form.Item
                 key={field.name}
                 label={field.label}
-                validateStatus={error ? "error" : ""}
-                help={
-                  typeof error?.message === "string" ? error.message : undefined
-                }
+                validateStatus={error ? 'error' : ''}
+                help={typeof error?.message === 'string' ? error.message : undefined}
               >
                 <Controller
                   name={field.name}
@@ -177,10 +178,10 @@ const PrototypeForm = <T extends FieldValues>({
                     const fileList: UploadFile[] = value
                       ? [
                           {
-                            uid: "-1",
-                            name: value.name || "Uploaded File",
-                            status: "done" as UploadFileStatus, // Cast status to UploadFileStatus
-                            url: value.url || "",
+                            uid: '-1',
+                            name: value.name || 'Uploaded File',
+                            status: 'done' as UploadFileStatus,
+                            url: value.url || '',
                           },
                         ]
                       : [];
@@ -189,14 +190,13 @@ const PrototypeForm = <T extends FieldValues>({
                         fileList={fileList}
                         disabled={field.disabled}
                         beforeUpload={(file) => {
-                          onChange(file); // Assign the uploaded file to the form field
-                          return false; // Prevent the actual upload
+                          onChange(file); // Update form state
+                          dispatch(uploadFileThunk({ file })); // Dispatch the thunk
+                          return false; // Prevent default upload behavior
                         }}
-                        onRemove={() => onChange(null)} // Remove the file from the form
+                        onRemove={() => onChange(null)}
                       >
-                        <Button icon={<UploadOutlined />}>
-                          Click to Upload
-                        </Button>
+                        <Button icon={<UploadOutlined />}>Click to Upload</Button>
                       </Upload>
                     );
                   }}

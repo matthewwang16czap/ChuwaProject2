@@ -4,7 +4,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import HomePage from './pages/DefaultPage';
-import OnboardingPage from './pages/OnboardingPage';
+import OnboardingPage from './pages/OnboardingApplicationPage';
 import PersonalInfoPage from './pages/PersonalInfoPage';
 import Logout from './components/Logout';
 import LoginPage from './pages/LoginPage';
