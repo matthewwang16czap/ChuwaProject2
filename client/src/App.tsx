@@ -16,6 +16,7 @@ import ProfilePage from './pages/ProfilePage'
 import PrivateRoute from './components/PrivateRoute';
 import { Provider } from 'react-redux';
 import store from './app/store';
+import EmployeeProfilesPage from './pages/EmployeeProfilesPage';
 
 function App() {
   return (
@@ -108,6 +109,17 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/employeeList"
+          element={
+            <PrivateRoute>
+              <MainLayout>
+                <EmployeeProfilesPage />
+              </MainLayout>
+            </PrivateRoute>
+          }
+        />
+
 
         {/* Catch-All Route */}
         <Route path="*" element={<Navigate to="/" replace />} />
