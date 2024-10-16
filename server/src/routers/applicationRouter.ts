@@ -1,6 +1,7 @@
 import express from "express";
 import {
   uploadFile,
+  getApplication,
   updateApplication,
   submitApplication,
   decideApplication,
@@ -17,6 +18,7 @@ const router = express.Router();
 
 // Route to handle file uploads
 router.post("/documents", verifyToken, verifyEmployee, uploadFile);
+router.get("/myapplication", verifyToken, verifyEmployee, getApplication);
 router.put("/update", verifyToken, verifyEmployee, updateApplication);
 router.put("/submit", verifyToken, verifyEmployee, submitApplication);
 router.put("/:applicationId/decide", verifyToken, verifyHR, decideApplication);

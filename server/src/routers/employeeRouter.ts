@@ -14,8 +14,9 @@ import {
 const router = express.Router();
 
 router.put("/update", verifyToken, verifyEmployee, updateEmployee);
+router.get("/myprofile", verifyToken, verifyEmployee, getEmployee);
 router.get("/all", verifyToken, verifyHR, getAllEmployees);
-router.get("/search", verifyToken, verifyHR, searchEmployees);
+router.post("/search", verifyToken, verifyHR, searchEmployees);
 router.get("/:employeeId", verifyToken, verifyHR, getEmployee);
 
 export default router;

@@ -56,10 +56,12 @@ interface ApplicationState {
   status: "loading" | "succeeded" | "failed" | null;
   action:
     | "uploadFile"
+    | "getApplication"
     | "updateApplication"
     | "submitApplication"
     | "decideApplication"
     | "decideDocument"
+    | "searchApplication"
     | null;
   error: string | null;
 }
@@ -95,6 +97,21 @@ export const uploadFileThunk = createAsyncThunk<
     return rejectWithValue("Unknown error");
   }
 });
+
+export const getApplicationThunk = createAsyncThunk(
+  "application/getApplication",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`${API_URL}/myapplication`);
+      return response.data;
+    } catch (err: unknown) {
+      if (err instanceof AxiosError && err.response) {
+        return rejectWithValue(err.response.data);
+      }
+      return rejectWithValue("Unknown error");
+    }
+  }
+);
 
 export const updateApplicationThunk = createAsyncThunk<
   UpdateApplicationResponse,
@@ -176,6 +193,22 @@ export const decideDocumentThunk = createAsyncThunk<
   }
 });
 
+export const searchApplicationThunk = createAsyncThunk(
+  "application/searchApplication",
+  async (documents: string[], { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(`${API_URL}/search`, { documents });
+      return response.data;
+    } catch (err: unknown) {
+      if (err instanceof AxiosError && err.response) {
+        return rejectWithValue(err.response.data);
+      }
+      return rejectWithValue("Unknown error");
+    }
+  }
+);
+
+// Update the slice
 const applicationSlice = createSlice({
   name: "application",
   initialState,
@@ -257,6 +290,36 @@ const applicationSlice = createSlice({
         state.error = null;
       })
       .addCase(decideDocumentThunk.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = (action.payload as string) ?? "Unknown error";
+      })
+
+      // Get Application
+      .addCase(getApplicationThunk.pending, (state) => {
+        state.status = "loading";
+        state.action = "getApplication";
+      })
+      .addCase(getApplicationThunk.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.application = action.payload.application;
+        state.error = null;
+      })
+      .addCase(getApplicationThunk.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = (action.payload as string) ?? "Unknown error";
+      })
+
+      // Search Application
+      .addCase(searchApplicationThunk.pending, (state) => {
+        state.status = "loading";
+        state.action = "searchApplication";
+      })
+      .addCase(searchApplicationThunk.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.application = action.payload.application;
+        state.error = null;
+      })
+      .addCase(searchApplicationThunk.rejected, (state, action) => {
         state.status = "failed";
         state.error = (action.payload as string) ?? "Unknown error";
       });
