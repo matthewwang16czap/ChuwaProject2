@@ -160,14 +160,14 @@ export const uploadFile: RequestHandler = async (
   });
 };
 
-// Middleware to get emplyee self's Application schema
+// Middleware to get Application schema
 export const getApplication: RequestHandler = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const applicationId = req?.user?.applicationId;
+    const applicationId = req?.user?.applicationId || req.params.applicationId;
     if (!applicationId) {
       res.status(400).json({ message: "ApplicationId ID is required" });
       return;

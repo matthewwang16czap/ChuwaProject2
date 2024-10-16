@@ -68,13 +68,8 @@ export const getEmployee: RequestHandler = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    let employee = null;
-    if (req.user?.role === "HR") {
-      employee = await Employee.findById(req.params.employeeId);
-    }
-    else {
-      employee = await Employee.findById(req.user?.employeeId);
-    }
+    const employeeId = req?.user?.employeeId || req.params.employeeId;
+    const employee = await Employee.findById(employeeId);
     if (!employee) {
       res.status(404).json({ message: "Employee not found" });
       return;

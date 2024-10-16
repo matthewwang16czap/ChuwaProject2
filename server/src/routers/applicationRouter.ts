@@ -28,6 +28,7 @@ router.put(
   verifyHR,
   decideDocument
 );
+router.get("/:applicationId", verifyToken, verifyEmployee, getApplication);
 router.post("/search", verifyToken, verifyHR, searchApplication);
 
 export default router;
