@@ -2,8 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import PrototypeForm from '../forms/PrototypeForm';
 import { useForm, FormProvider } from 'react-hook-form';
-import axios from 'axios';
 import { Modal } from 'antd'; // For confirmation dialog
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../app/store'; // Adjust the path as needed
+import {
+  getMyProfileThunk,
+  updateEmployeeThunk,
+} from '../features/employee/employeeSlice'; // Adjust the path as needed
 
 // Define the Employee interface based on your model
 interface IEmployee {
@@ -49,7 +54,9 @@ interface IEmployee {
 }
 
 const PersonalInfoPage: React.FC = () => {
-  const [employeeInfo, setEmployeeInfo] = useState<IEmployee | null>(null);
+  const dispatch = useDispatch();
+  const employeeState = useSelector((state: RootState) => state.employee);
+  const employeeInfo = employeeState.employee as IEmployee | null;
   const [loading, setLoading] = useState<boolean>(true);
   const [editSections, setEditSections] = useState<{
     [key: string]: boolean;
@@ -68,12 +75,10 @@ const PersonalInfoPage: React.FC = () => {
   const { reset, handleSubmit } = methods;
 
   useEffect(() => {
-    // Fetch employee information from backend
+    // Fetch employee information using getMyProfileThunk
     const fetchEmployeeInfo = async () => {
       try {
-        const response = await axios.get('/api/employee-info');
-        setEmployeeInfo(response.data);
-        reset(response.data);
+        await dispatch(getMyProfileThunk());
       } catch (error) {
         console.error('Error fetching employee info:', error);
       } finally {
@@ -82,7 +87,16 @@ const PersonalInfoPage: React.FC = () => {
     };
 
     fetchEmployeeInfo();
-  }, [reset]);
+    
+  }, [dispatch]);
+
+  useEffect(() => {
+    // Reset form when employeeInfo changes
+    if (employeeInfo) {
+      reset(employeeInfo);
+    }
+    
+  }, [employeeInfo, reset]);
 
   const handleEditClick = (section: string) => {
     setEditSections((prev) => ({ ...prev, [section]: true }));
@@ -94,7 +108,9 @@ const PersonalInfoPage: React.FC = () => {
       content: 'Are you sure you want to discard all of your changes?',
       onOk() {
         // Reset the form to previous values
-        reset();
+        if (employeeInfo) {
+          reset(employeeInfo);
+        }
         setEditSections((prev) => ({ ...prev, [section]: false }));
       },
     });
@@ -103,10 +119,48 @@ const PersonalInfoPage: React.FC = () => {
   const handleSaveClick = async (section: string) => {
     const data = methods.getValues(); // Get all form data
     try {
-      // Update the backend with new data
-      await axios.put(`/api/employee-info/${section}`, data);
-      // Update the local state
-      setEmployeeInfo((prev) => ({ ...prev, ...data }));
+      // Prepare the update data for the specific section
+      let updateData: Record<string, unknown> = {};
+      switch (section) {
+        case 'name':
+          updateData = {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            middleName: data.middleName,
+            preferredName: data.preferredName,
+            profilePictureUrl: data.profilePictureUrl,
+            ssn: data.ssn,
+            dateOfBirth: data.dateOfBirth,
+            gender: data.gender,
+          };
+          break;
+        case 'address':
+          updateData = {
+            address: data.address,
+          };
+          break;
+        case 'contactInfo':
+          updateData = {
+            contactInfo: data.contactInfo,
+          };
+          break;
+        case 'employment':
+          updateData = {
+            employment: data.employment,
+          };
+          break;
+        case 'emergencyContact':
+          updateData = {
+            emergencyContact: data.emergencyContact,
+          };
+          break;
+        default:
+          break;
+      }
+
+      // Dispatch the updateEmployeeThunk with the updated data
+      await dispatch(updateEmployeeThunk(updateData));
+
       // Exit edit mode
       setEditSections((prev) => ({ ...prev, [section]: false }));
     } catch (error) {
@@ -129,7 +183,7 @@ const PersonalInfoPage: React.FC = () => {
           isEditing={editSections.name}
           onEdit={() => handleEditClick('name')}
           onCancel={() => handleCancelClick('name')}
-          onSave={() => handleSubmit(() => handleSaveClick('name'))()}
+          onSave={handleSubmit(() => handleSaveClick('name'))}
         >
           <PrototypeForm
             fields={[
@@ -175,6 +229,7 @@ const PersonalInfoPage: React.FC = () => {
                 name: 'ssn',
                 label: 'SSN',
                 type: 'input',
+                inputType: 'password', // Hide SSN input
                 disabled: !editSections.name,
                 validation: {
                   pattern: {
@@ -203,7 +258,19 @@ const PersonalInfoPage: React.FC = () => {
             ]}
             onSubmit={() => {}}
             methods={methods}
+            showSubmitButton={false}
           />
+          {/* Display Profile Picture */}
+          {employeeInfo.profilePictureUrl && (
+            <div>
+              <h4>Profile Picture</h4>
+              <img
+                src={employeeInfo.profilePictureUrl}
+                alt="Profile"
+                style={{ width: '150px', height: '150px', borderRadius: '50%' }}
+              />
+            </div>
+          )}
         </Section>
 
         {/* Address Section */}
@@ -212,7 +279,7 @@ const PersonalInfoPage: React.FC = () => {
           isEditing={editSections.address}
           onEdit={() => handleEditClick('address')}
           onCancel={() => handleCancelClick('address')}
-          onSave={() => handleSubmit(() => handleSaveClick('address'))()}
+          onSave={handleSubmit(() => handleSaveClick('address'))}
         >
           <PrototypeForm
             fields={[
@@ -249,6 +316,7 @@ const PersonalInfoPage: React.FC = () => {
             ]}
             onSubmit={() => {}}
             methods={methods}
+            showSubmitButton={false}
           />
         </Section>
 
@@ -258,7 +326,7 @@ const PersonalInfoPage: React.FC = () => {
           isEditing={editSections.contactInfo}
           onEdit={() => handleEditClick('contactInfo')}
           onCancel={() => handleCancelClick('contactInfo')}
-          onSave={() => handleSubmit(() => handleSaveClick('contactInfo'))()}
+          onSave={handleSubmit(() => handleSaveClick('contactInfo'))}
         >
           <PrototypeForm
             fields={[
@@ -289,6 +357,7 @@ const PersonalInfoPage: React.FC = () => {
             ]}
             onSubmit={() => {}}
             methods={methods}
+            showSubmitButton={false}
           />
         </Section>
 
@@ -298,7 +367,7 @@ const PersonalInfoPage: React.FC = () => {
           isEditing={editSections.employment}
           onEdit={() => handleEditClick('employment')}
           onCancel={() => handleCancelClick('employment')}
-          onSave={() => handleSubmit(() => handleSaveClick('employment'))()}
+          onSave={handleSubmit(() => handleSaveClick('employment'))}
         >
           <PrototypeForm
             fields={[
@@ -323,6 +392,7 @@ const PersonalInfoPage: React.FC = () => {
             ]}
             onSubmit={() => {}}
             methods={methods}
+            showSubmitButton={false}
           />
         </Section>
 
@@ -332,7 +402,7 @@ const PersonalInfoPage: React.FC = () => {
           isEditing={editSections.emergencyContact}
           onEdit={() => handleEditClick('emergencyContact')}
           onCancel={() => handleCancelClick('emergencyContact')}
-          onSave={() => handleSubmit(() => handleSaveClick('emergencyContact'))()}
+          onSave={handleSubmit(() => handleSaveClick('emergencyContact'))}
         >
           <PrototypeForm
             fields={[
@@ -387,17 +457,28 @@ const PersonalInfoPage: React.FC = () => {
             ]}
             onSubmit={() => {}}
             methods={methods}
+            showSubmitButton={false}
           />
         </Section>
 
         {/* Documents Section */}
-        <div>
+        <div style={{ marginBottom: '20px' }}>
           <h3>Documents</h3>
           <ul>
-            {employeeInfo.documents?.map((doc, index) => (
+          {Array.isArray(employeeInfo.documents) &&
+          employeeInfo.documents?.map((doc, index) => (
               <li key={index}>
                 <a href={doc.url} target="_blank" rel="noopener noreferrer">
                   {doc.name}
+                </a>
+                <button
+                  style={{ marginLeft: '10px' }}
+                  onClick={() => window.open(doc.url, '_blank')}
+                >
+                  Preview
+                </button>
+                <a href={doc.url} download style={{ marginLeft: '10px' }}>
+                  Download
                 </a>
               </li>
             ))}
@@ -426,7 +507,7 @@ const Section: React.FC<SectionProps> = ({
   children,
 }) => {
   return (
-    <div>
+    <div style={{ marginBottom: '20px' }}>
       <h3>{title}</h3>
       {!isEditing ? (
         <button onClick={onEdit}>Edit</button>
