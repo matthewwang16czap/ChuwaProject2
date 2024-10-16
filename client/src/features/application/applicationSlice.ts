@@ -56,11 +56,12 @@ interface ApplicationState {
   status: "loading" | "succeeded" | "failed" | null;
   action:
     | "uploadFile"
-    | "getApplication"
+    | "getMyApplication"
     | "updateApplication"
     | "submitApplication"
     | "decideApplication"
     | "decideDocument"
+    | "getApplication"
     | "searchApplication"
     | null;
   error: string | null;
@@ -98,8 +99,8 @@ export const uploadFileThunk = createAsyncThunk<
   }
 });
 
-export const getApplicationThunk = createAsyncThunk(
-  "application/getApplication",
+export const getMyApplicationThunk = createAsyncThunk(
+  "application/getMyApplication",
   async (_, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get(`${API_URL}/myapplication`);
@@ -193,6 +194,21 @@ export const decideDocumentThunk = createAsyncThunk<
   }
 });
 
+export const getApplicationThunk = createAsyncThunk(
+  "application/getApplication",
+  async (applicationId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`${API_URL}/${applicationId}`);
+      return response.data;
+    } catch (err: unknown) {
+      if (err instanceof AxiosError && err.response) {
+        return rejectWithValue(err.response.data);
+      }
+      return rejectWithValue("Unknown error");
+    }
+  }
+);
+
 export const searchApplicationThunk = createAsyncThunk(
   "application/searchApplication",
   async (documents: string[], { rejectWithValue }) => {
@@ -226,6 +242,21 @@ const applicationSlice = createSlice({
         state.error = null;
       })
       .addCase(uploadFileThunk.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = (action.payload as string) ?? "Unknown error";
+      })
+
+      // Get My Application
+      .addCase(getMyApplicationThunk.pending, (state) => {
+        state.status = "loading";
+        state.action = "getApplication";
+      })
+      .addCase(getMyApplicationThunk.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.application = action.payload.application;
+        state.error = null;
+      })
+      .addCase(getMyApplicationThunk.rejected, (state, action) => {
         state.status = "failed";
         state.error = (action.payload as string) ?? "Unknown error";
       })
