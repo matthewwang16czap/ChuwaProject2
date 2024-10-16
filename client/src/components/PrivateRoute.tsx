@@ -26,7 +26,7 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, roles = [] }) => 
   }
 
   const userRole = user.role;
-
+  console.log(userRole);
   // If the user does not have the required role, redirect to unauthorized page
   if (roles.length > 0 && !roles.includes(userRole)) {
     return <Navigate to="/unauthorized" replace />;
