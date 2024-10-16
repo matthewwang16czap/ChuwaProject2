@@ -4,17 +4,19 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import HomePage from './pages/DefaultPage';
-import OnboardingPage from './pages/OnboardingPage';
+import OnboardingPage from './pages/OnboardingApplicationPage';
 import PersonalInfoPage from './pages/PersonalInfoPage';
 import Logout from './components/Logout';
 import LoginPage from './pages/LoginPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import SendInvitationPage from './pages/SendInvitationPage';
 import RegisterPage from './pages/RegisterPage';
-import ChangePassword from './pages/ChangePassword'; // Import the ChangePassword page
+import ChangePassword from './pages/ChangePassword';
+import ProfilePage from './pages/ProfilePage'
 import PrivateRoute from './components/PrivateRoute';
 import { Provider } from 'react-redux';
 import store from './app/store';
+import EmployeeProfilesPage from './pages/EmployeeProfilesPage';
 
 function App() {
   return (
@@ -52,6 +54,16 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute roles={['Employee', 'HR']}>
+              <MainLayout>
+                <ProfilePage />
+              </MainLayout>
+            </PrivateRoute>
+          }
+        />  
 
         {/* Employee-Only Routes */}
         <Route
@@ -97,6 +109,17 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/employeeList"
+          element={
+            <PrivateRoute>
+              <MainLayout>
+                <EmployeeProfilesPage />
+              </MainLayout>
+            </PrivateRoute>
+          }
+        />
+
 
         {/* Catch-All Route */}
         <Route path="*" element={<Navigate to="/" replace />} />

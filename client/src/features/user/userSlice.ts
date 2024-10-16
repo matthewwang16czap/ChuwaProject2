@@ -42,6 +42,8 @@ const initialState: UserState = {
   error: null,
 };
 
+export const selectUser = (state: RootState) => state.user;
+
 // Utility function to decode JWT and extract user info
 const decodeToken = (): IPayload | null => {
   const token = localStorage.getItem("jwtToken");
