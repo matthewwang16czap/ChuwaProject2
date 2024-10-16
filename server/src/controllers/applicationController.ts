@@ -160,6 +160,27 @@ export const uploadFile: RequestHandler = async (
   });
 };
 
+// Middleware to get emplyee self's Application schema
+export const getApplication: RequestHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const applicationId = req?.user?.applicationId;
+    if (!applicationId) {
+      res.status(400).json({ message: "ApplicationId ID is required" });
+      return;
+    }
+    const application = await Application.findById(applicationId);
+    res
+      .status(200)
+      .json({ message: "Get successfully", application });
+  } catch (error) {
+    res.status(500).json({ message: "Get failed", error });
+  }
+};
+
 // Middleware to update Application schema
 export const updateApplication: RequestHandler = async (
   req: Request,
@@ -483,11 +504,9 @@ export const searchApplication: RequestHandler = async (
   const { documents } = req.body;
 
   if (!Array.isArray(documents) || documents.length === 0) {
-    res
-      .status(400)
-      .json({
-        message: "An array of documents with name and status is required.",
-      });
+    res.status(400).json({
+      message: "An array of documents with name and status is required.",
+    });
     return;
   }
 
