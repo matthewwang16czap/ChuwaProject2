@@ -19,6 +19,7 @@ interface EmployeeState {
   status: "loading" | "succeeded" | "failed" | null;
   action:
     | "updateEmployee"
+    | "getMyProfile"
     | "getAllEmployees"
     | "getEmployee"
     | "searchEmployees"
@@ -27,7 +28,6 @@ interface EmployeeState {
   error: string | null;
 }
 
-// Thunks
 export const updateEmployeeThunk = createAsyncThunk<
   { message: string; updatedEmployee: Employee },
   Record<string, unknown>,
@@ -42,6 +42,25 @@ export const updateEmployeeThunk = createAsyncThunk<
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
       return rejectWithValue(err.response.data);
+    }
+    return rejectWithValue("Unknown error");
+  }
+});
+
+export const getMyProfileThunk = createAsyncThunk<
+  { message: string; employee: Employee },
+  void,
+  { rejectValue: string }
+>("employee/getMyProfile", async (_, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.get<{
+      message: string;
+      employee: Employee;
+    }>(`${API_URL}/myprofile`);
+    return response.data;
+  } catch (err: unknown) {
+    if (err instanceof AxiosError && err.response) {
+      return rejectWithValue(err.response.data.message);
     }
     return rejectWithValue("Unknown error");
   }
@@ -132,6 +151,22 @@ const employeeSlice = createSlice({
     builder.addCase(updateEmployeeThunk.rejected, (state, action) => {
       state.status = "failed";
       state.error = action.payload || "Update failed";
+    });
+
+    // Get My Profile
+    builder.addCase(getMyProfileThunk.pending, (state) => {
+      state.status = "loading";
+      state.action = "getMyProfile";
+    });   
+    builder.addCase(getMyProfileThunk.fulfilled, (state, action) => {
+      state.status = "succeeded";
+      state.employee = action.payload.employee;
+      state.message = action.payload.message;
+      state.error = null;
+    });  
+    builder.addCase(getMyProfileThunk.rejected, (state, action) => {
+      state.status = "failed";
+      state.error = action.payload || "Failed to fetch profile";
     });
 
     // Get All Employees

@@ -56,10 +56,9 @@ export const getAllEmployees: RequestHandler = async (
       res.status(404).json({ message: "Employees not found" });
       return;
     }
-
-    res.status(200).json({ message: "Update successfully", allEmployees });
+    res.status(200).json({ message: "Get successfully", allEmployees });
   } catch (error) {
-    res.status(500).json({ message: "Update failed", error });
+    res.status(500).json({ message: "Get failed", error });
   }
 };
 
@@ -69,15 +68,15 @@ export const getEmployee: RequestHandler = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const employee = await Employee.findById(req.params.employeeId);
+    const employeeId = req?.user?.employeeId || req.params.employeeId;
+    const employee = await Employee.findById(employeeId);
     if (!employee) {
       res.status(404).json({ message: "Employee not found" });
       return;
     }
-
-    res.status(200).json({ message: "Update successfully", employee });
+    res.status(200).json({ message: "Get successfully", employee });
   } catch (error) {
-    res.status(500).json({ message: "Update failed", error });
+    res.status(500).json({ message: "Get failed", error });
   }
 };
 
@@ -87,7 +86,6 @@ export const searchEmployees: RequestHandler = async (
   next: NextFunction
 ): Promise<void> => {
   const { firstName, lastName, preferredName } = req.body;
-
   if (!firstName && !lastName && !preferredName) {
     res.status(400).json({
       message:
@@ -95,7 +93,6 @@ export const searchEmployees: RequestHandler = async (
     });
     return;
   }
-
   try {
     const query: any = {};
 
