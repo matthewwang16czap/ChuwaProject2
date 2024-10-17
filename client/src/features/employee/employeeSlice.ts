@@ -41,7 +41,7 @@ export const updateEmployeeThunk = createAsyncThunk<
     return response.data;
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response.data.message);
     }
     return rejectWithValue("Unknown error");
   }
@@ -79,7 +79,7 @@ export const getAllEmployeesThunk = createAsyncThunk<
     return response.data;
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response.data.message);
     }
     return rejectWithValue("Unknown error");
   }

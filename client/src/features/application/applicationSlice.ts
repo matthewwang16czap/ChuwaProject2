@@ -93,7 +93,7 @@ export const uploadFileThunk = createAsyncThunk<
     return response.data;
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response.data.message);
     }
     return rejectWithValue("Unknown error");
   }
@@ -107,7 +107,7 @@ export const getMyApplicationThunk = createAsyncThunk(
       return response.data;
     } catch (err: unknown) {
       if (err instanceof AxiosError && err.response) {
-        return rejectWithValue(err.response.data);
+        return rejectWithValue(err.response.data.message);
       }
       return rejectWithValue("Unknown error");
     }
@@ -126,7 +126,7 @@ export const updateApplicationThunk = createAsyncThunk<
     return response.data;
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response.data.message);
     }
     return rejectWithValue("Unknown error");
   }
@@ -143,7 +143,7 @@ export const submitApplicationThunk =
         return response.data;
       } catch (err: unknown) {
         if (err instanceof AxiosError && err.response) {
-          return rejectWithValue(err.response.data);
+          return rejectWithValue(err.response.data.message);
         }
         return rejectWithValue("Unknown error");
       }
@@ -166,7 +166,7 @@ export const decideApplicationThunk = createAsyncThunk<
     return response.data;
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response.data.message);
     }
     return rejectWithValue("Unknown error");
   }
@@ -188,7 +188,7 @@ export const decideDocumentThunk = createAsyncThunk<
     return response.data;
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response.data.message);
     }
     return rejectWithValue("Unknown error");
   }
@@ -202,7 +202,7 @@ export const getApplicationThunk = createAsyncThunk(
       return response.data;
     } catch (err: unknown) {
       if (err instanceof AxiosError && err.response) {
-        return rejectWithValue(err.response.data);
+        return rejectWithValue(err.response.data.message);
       }
       return rejectWithValue("Unknown error");
     }
@@ -217,7 +217,7 @@ export const searchApplicationThunk = createAsyncThunk(
       return response.data;
     } catch (err: unknown) {
       if (err instanceof AxiosError && err.response) {
-        return rejectWithValue(err.response.data);
+        return rejectWithValue(err.response.data.message);
       }
       return rejectWithValue("Unknown error");
     }
