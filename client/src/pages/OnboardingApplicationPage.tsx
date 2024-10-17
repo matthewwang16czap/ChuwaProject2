@@ -1,80 +1,39 @@
 // OnboardingPage.tsx
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PrototypeForm from '../forms/PrototypeForm';
 import { useForm } from 'react-hook-form';
-import axios from 'axios';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState, AppDispatch } from '../app/store'; // Adjust the path as needed
+import {
+  getMyApplicationThunk,
+  updateApplicationThunk,
+  submitApplicationThunk,
+  uploadFileThunk,
+} from '../features/application/applicationSlice'; // Adjust the path as needed
+import { Alert, Spin, notification, Typography } from 'antd';
+import moment from 'moment'; // Ensure moment is installed: npm install moment
 
-interface IDocument {
-  name: string;
-  url?: string;
-  status: 'Pending' | 'Approved' | 'Rejected';
-  feedback?: string;
-}
-
-interface IWorkAuthorization {
-  visaType: 'H1-B' | 'L2' | 'F1(CPT/OPT)' | 'H4' | 'Other';
-  visaTitle?: string;
-  startDate: Date;
-  endDate?: Date;
-  documents?: IDocument[];
-}
-
-interface IApplication {
-  employeeId: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  middleName?: string;
-  preferredName?: string;
-  profilePictureUrl?: string;
-  address?: {
-    building: string;
-    street: string;
-    city: string;
-    state: string;
-    zip: string;
-  };
-  cellPhone?: string;
-  workPhone?: string;
-  ssn?: string;
-  dateOfBirth?: Date;
-  gender?: 'Male' | 'Female' | 'Other';
-  citizenship?: 'Green Card' | 'Citizen' | 'Work Authorization';
-  workAuthorization?: IWorkAuthorization;
-  references?: {
-    firstName: string;
-    lastName: string;
-    middleName?: string;
-    phone: string;
-    email: string;
-    relationship: string;
-  };
-  emergencyContacts?: {
-    firstName: string;
-    lastName: string;
-    middleName?: string;
-    phone: string;
-    email: string;
-    relationship: string;
-  }[];
-  documents?: {
-    profilePictureUrl?: string;
-    driversLicenseUrl?: string;
-  };
-  status: 'Pending' | 'Approved' | 'Rejected';
-  feedback?: string;
-}
+const { Title } = Typography;
 
 const OnboardingPage: React.FC = () => {
-  const [status, setStatus] = useState<string>('');
-  const [applicationData, setApplicationData] = useState<IApplication | null>(null);
-  const [feedback, setFeedback] = useState<string>('');
+  const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
 
-  const methods = useForm<IApplication>({
-    defaultValues: applicationData || {},
+  // Selectors to access Redux state
+  const { application, status: appStatus, error: appError, message } = useSelector(
+    (state: RootState) => state.application
+  );
+
+  // Local state for feedback (optional, based on your logic)
+  const [feedback, setFeedback] = useState<string>('');
+
+  // Initialize react-hook-form with default values from application data
+  const methods = useForm<any>({
+    defaultValues: application || {},
   });
+
   const {
     register,
     handleSubmit,
@@ -88,30 +47,44 @@ const OnboardingPage: React.FC = () => {
   const visaType = watch('workAuthorization.visaType');
 
   useEffect(() => {
-    // Fetch application status and data
-    const fetchApplicationData = async () => {
-      try {
-        // Replace with your actual API endpoint
-        const response = await axios.get('/api/onboarding/application');
-        const { status, data, feedback } = response.data;
-        setStatus(status);
-        setApplicationData(data || {});
-        setFeedback(feedback || '');
-        reset(data || {});
-      } catch (error) {
-        console.error('Error fetching application data:', error);
-      }
-    };
-
-    fetchApplicationData();
-  }, [reset]);
+    // Fetch application data from Redux store
+    dispatch(getMyApplicationThunk());
+    console.log("Dispatched getMyApplicationThunk");
+  }, [dispatch]);
 
   useEffect(() => {
-    // Redirect to home page if approved
-    if (status === 'Approved') {
+    // Update form with fetched application data
+    if (application) {
+      console.log("Application data received:", application);
+      reset(application);
+      setFeedback(application.feedback || '');
+    } else {
+      console.log("No application data available");
+    }
+  }, [application, reset]);
+
+  useEffect(() => {
+    // Navigate to home if application is approved
+    if (application && application.status === 'Approved') {
+      console.log("Application approved, navigating to home");
+      notification.success({
+        message: 'Application Approved',
+        description: 'Your onboarding application has been approved. Welcome aboard!',
+      });
       navigate('/home');
     }
-  }, [status, navigate]);
+  }, [application, navigate]);
+
+  useEffect(() => {
+    // Display success message upon successful submission
+    if (message) {
+      console.log("Submission message:", message);
+      notification.success({
+        message: 'Application Submitted',
+        description: message,
+      });
+    }
+  }, [message]);
 
   const getFields = () => {
     const fields = [
@@ -141,6 +114,7 @@ const OnboardingPage: React.FC = () => {
         name: 'documents.profilePictureUrl',
         label: 'Profile Picture',
         type: 'upload',
+        validation: { required: 'Profile picture is required' },
       },
       {
         name: 'address.building',
@@ -294,75 +268,135 @@ const OnboardingPage: React.FC = () => {
     return fields;
   };
 
-  const onSubmit = async (data: IApplication) => {
+  const onSubmit = async (data: any) => {
     try {
-      // Convert file uploads to appropriate format if needed
-      const formData = new FormData();
-      for (const key in data) {
-        if (key === 'documents' && data.documents?.profilePictureUrl instanceof FileList) {
-          formData.append('profilePicture', data.documents.profilePictureUrl[0]);
-        } else if (key === 'workAuthorization' && data.workAuthorization?.documents) {
-          // Handle work authorization documents
-          data.workAuthorization.documents.forEach((doc, index) => {
-            if (doc.url instanceof FileList) {
-              formData.append(`workAuthorization.documents[${index}].url`, doc.url[0]);
-            } else {
-              formData.append(`workAuthorization.documents[${index}].url`, doc.url || '');
-            }
-          });
-        } else {
-          formData.append(key, JSON.stringify(data[key]));
-        }
+      // Handle file uploads before submitting the form
+      // Assuming profilePictureUrl and workAuthorization.documents are files
+      if (
+        data.documents &&
+        data.documents.profilePictureUrl &&
+        data.documents.profilePictureUrl instanceof File
+      ) {
+        console.log("Uploading profile picture:", data.documents.profilePictureUrl);
+        const uploadResponse = await dispatch(
+          uploadFileThunk({ file: data.documents.profilePictureUrl })
+        ).unwrap();
+        data.documents.profilePictureUrl = uploadResponse.filePath;
       }
 
-      // Replace with your actual API endpoint
-      const response = await axios.post('/api/onboarding/submit', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      if (
+        data.workAuthorization &&
+        data.workAuthorization.documents &&
+        data.workAuthorization.documents[0].url &&
+        data.workAuthorization.documents[0].url instanceof File
+      ) {
+        console.log("Uploading work authorization document:", data.workAuthorization.documents[0].url);
+        const uploadResponse = await dispatch(
+          uploadFileThunk({ file: data.workAuthorization.documents[0].url })
+        ).unwrap();
+        data.workAuthorization.documents[0].url = uploadResponse.filePath;
+      }
+
+      // Dispatch updateApplicationThunk to update the application data
+      await dispatch(updateApplicationThunk({ updateData: data })).unwrap();
+      console.log("Application updated successfully.");
+
+      // Dispatch submitApplicationThunk to submit the application
+      await dispatch(submitApplicationThunk()).unwrap();
+      console.log("Application submitted successfully.");
+
+      // Notify user of successful submission
+      notification.success({
+        message: 'Application Submitted',
+        description: 'Your onboarding application has been submitted successfully and is pending review.',
       });
-      console.log(formData);
-      console.log('Submission successful:', response.data);
-      setStatus('Pending');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting application:', error);
+      notification.error({
+        message: 'Submission Failed',
+        description: error || 'There was an error submitting your application.',
+      });
     }
   };
 
-  if (status === 'Pending') {
+  // Display loading state
+  if (appStatus === 'loading') {
     return (
-      <div>
-        <h2>Please wait for HR to review your application.</h2>
-        <h3>Your Submitted Application</h3>
-        <pre>{JSON.stringify(applicationData, null, 2)}</pre>
-        <h3>Uploaded Documents</h3>
-        <ul>
-          {applicationData?.workAuthorization?.documents?.map((doc, index) => (
-            <li key={index}>
-              <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                {doc.name}
-              </a>
-            </li>
-          ))}
-        </ul>
+      <div className="flex justify-center items-center my-10">
+        <Spin size="large" />
       </div>
     );
   }
 
-  if (status === 'Rejected' || status === 'Never submitted' || status === '') {
+  // Display error state
+  if (appError) {
     return (
-      <div>
-        <h2>Onboarding Application</h2>
-        {status === 'Rejected' && (
-          <div>
-            <h3>Your application was rejected.</h3>
-            <p>Feedback: {feedback}</p>
+      <Alert
+        message="Error"
+        description={appError}
+        type="error"
+        showIcon
+        className="mb-6"
+      />
+    );
+  }
+
+  // Conditional Rendering based on application status
+  if (application) {
+    if (application.status === 'Pending') {
+      return (
+        <div>
+          <Title level={2} className="text-center my-6">Please wait for HR to review your application.</Title>
+          <Title level={4} className="my-4">Your Submitted Application</Title>
+          <pre className="bg-gray-100 p-4 rounded">{JSON.stringify(application, null, 2)}</pre>
+          <Title level={4} className="my-4">Uploaded Documents</Title>
+          <ul className="list-disc list-inside">
+            {application.workAuthorization?.documents?.map((doc: any, index: number) => (
+              <li key={index}>
+                <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
+                  {doc.name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+
+    if (application.status === 'Rejected') {
+      return (
+        <div>
+          <Title level={2} className="text-center my-6">Your application was rejected.</Title>
+          <div className="mb-6">
+            <Alert
+              message="Feedback"
+              description={application.feedback || 'No feedback provided.'}
+              type="warning"
+              showIcon
+            />
           </div>
-        )}
-        <PrototypeForm fields={getFields()} onSubmit={onSubmit} methods={methods} />
-      </div>
-    );
+          <Title level={4} className="my-4">Resubmit Your Application</Title>
+          <PrototypeForm fields={getFields()} onSubmit={onSubmit} methods={methods} />
+        </div>
+      );
+    }
+
+    if (application.status === 'Never submitted' || !application.status) {
+      return (
+        <div>
+          <Title level={2} className="text-center my-6">Onboarding Application</Title>
+          <PrototypeForm fields={getFields()} onSubmit={onSubmit} methods={methods} />
+        </div>
+      );
+    }
   }
 
-  return <div>Loading...</div>;
+  // Default loading state if application is not yet loaded
+  return (
+    <div className="flex justify-center items-center my-10">
+      <Spin size="large" />
+    </div>
+  );
 };
 
 export default OnboardingPage;

@@ -93,12 +93,12 @@ function App() {
           element={
             <PrivateRoute roles={['HR']}>
               <MainLayout>
-                {/* Replace with your HR-specific page/component */}
-                <div>HR Dashboard</div>
+              <div>HR Dashboard</div>
               </MainLayout>
             </PrivateRoute>
           }
         />
+
         <Route
           path="/send-invitation"
           element={
