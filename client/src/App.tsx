@@ -9,7 +9,7 @@ import PersonalInfoPage from './pages/PersonalInfoPage';
 import Logout from './components/Logout';
 import LoginPage from './pages/LoginPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
-import SendInvitationPage from './pages/SendInvitationPage';
+import SendInvitationPage from './pages/HiringManagementPage';
 import RegisterPage from './pages/RegisterPage';
 import ChangePassword from './pages/ChangePassword';
 import ProfilePage from './pages/ProfilePage'
