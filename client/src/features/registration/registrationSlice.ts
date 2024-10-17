@@ -113,7 +113,7 @@ export const getRegistrationHistory = createAsyncThunk<
       return response.data; // Return the data from the response
     } catch (err: unknown) {
       if (err instanceof AxiosError && err.response) {
-        return rejectWithValue(err.response.data);
+        return rejectWithValue(err.response.data.message);
       }
       return rejectWithValue("Unknown error occurred");
     }

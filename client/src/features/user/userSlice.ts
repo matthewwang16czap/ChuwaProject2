@@ -42,8 +42,6 @@ const initialState: UserState = {
   error: null,
 };
 
-export const selectUser = (state: RootState) => state.user;
-
 // Utility function to decode JWT and extract user info
 const decodeToken = (): IPayload | null => {
   const token = localStorage.getItem("jwtToken");
@@ -71,7 +69,7 @@ export const login = createAsyncThunk<
     localStorage.setItem("jwtToken", token);
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response.data.message);
     }
     return rejectWithValue("Unknown error occurred during login.");
   }
@@ -87,7 +85,7 @@ export const changeUserPassword = createAsyncThunk<
     await axiosInstance.post(`${API_URL}/changepassword`, passwordData);
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response.data.message);
     }
     return rejectWithValue("Unknown error occurred during password change.");
   }

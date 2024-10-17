@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import PrototypeForm, { Field } from '../forms/PrototypeForm';
 import { useDispatch, useSelector } from 'react-redux';
-import { login, selectUser } from '../features/user/userSlice';
+import { login } from '../features/user/userSlice';
 import { RootState, AppDispatch } from '../app/store';
 
 interface LoginFormInputs {
@@ -16,7 +16,7 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch: AppDispatch = useDispatch();
 
-  const { loginStatus, error, isAuthenticated } = useSelector(selectUser);
+  const { loginStatus, error } = useSelector((state: RootState) => state.user);
 
   const methods = useForm<LoginFormInputs>();
   const onSubmit: SubmitHandler<LoginFormInputs> = (data) => {

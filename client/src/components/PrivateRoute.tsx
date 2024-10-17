@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../app/store';
@@ -12,13 +12,19 @@ interface PrivateRouteProps {
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, roles = [] }) => {
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.user);
+  const [authChecked, setAuthChecked] = useState(false);
 
-  // Dispatch checkAuth on component mount
   useEffect(() => {
     if (!user) {
       dispatch(checkAuth());
     }
+    setAuthChecked(true);  // Mark auth check as completed
   }, [user, dispatch]);
+
+  // Wait until authentication has been checked
+  if (!authChecked) {
+    return null; // or render a placeholder like a spinner
+  }
 
   // If the user is not authenticated, redirect to login
   if (!user) {
@@ -26,7 +32,7 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, roles = [] }) => 
   }
 
   const userRole = user.role;
-  console.log(userRole);
+
   // If the user does not have the required role, redirect to unauthorized page
   if (roles.length > 0 && !roles.includes(userRole)) {
     return <Navigate to="/unauthorized" replace />;
