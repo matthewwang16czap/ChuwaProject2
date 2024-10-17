@@ -109,6 +109,10 @@ const userSlice = createSlice({
         state.user = null;
       }
     },
+    clearStatus: (state) => {
+      state.loginStatus = null;
+      state.passwordChangeStatus = null;
+    },
   },
   extraReducers: (builder) => {
     // Handle login actions
@@ -157,7 +161,7 @@ const userSlice = createSlice({
 });
 
 // Action exports
-export const { logout, checkAuth } = userSlice.actions;
+export const { logout, checkAuth, clearStatus } = userSlice.actions;
 
 // Reducer export
 export default userSlice.reducer;
