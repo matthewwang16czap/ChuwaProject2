@@ -80,7 +80,7 @@ export const getEmployee: RequestHandler = async (
   }
 };
 
-export const searchEmployees: RequestHandler = async (
+export const searchEmployeesByName: RequestHandler = async (
   req: Request,
   res: Response,
   next: NextFunction

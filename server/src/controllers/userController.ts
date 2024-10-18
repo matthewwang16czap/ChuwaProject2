@@ -1,7 +1,7 @@
 import { Request, Response, RequestHandler, NextFunction } from "express";
 import User from "../models/User";
 import Employee from "../models/Employee";
-import bcrypt from "bcrypt";
+import Application from "../models/Application";
 import jwt from "jsonwebtoken";
 
 interface IPayload {
@@ -92,5 +92,30 @@ export const changePassword: RequestHandler = async (
     res.status(200).json({ message: "Password updated successfully." });
   } catch (error) {
     res.status(500).json({ message: "Error changing password.", error });
+  }
+};
+
+// HR to get all employee users
+export const getAllEmployeeUsers: RequestHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    // Fetch all users who are not HR (employees) and populate employeeId and applicationId
+    const users = await User.find({ role: { $ne: "HR" } })
+      .populate({
+        path: 'employeeId', // Populate employeeId from Employee schema
+        populate: {
+          path: 'applicationId', // Populate applicationId from Application schema
+          model: 'Application'
+        },
+      })
+      .lean();
+
+    // Send the response with all users and their related data
+    res.status(200).json({ users });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching employee users.", error });
   }
 };
