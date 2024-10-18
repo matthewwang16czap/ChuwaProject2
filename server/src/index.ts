@@ -7,7 +7,7 @@ import applicationRouter from './routers/applicationRouter';
 import employeeRouter from './routers/employeeRouter';
 import errorHandler from './middlewares/errorHandler';
 import cors from 'cors';
-import { verifyToken, verifyHR } from "./middlewares/tokenAuth";
+import { verifyToken, verifyHR, verifyEmployee } from "./middlewares/tokenAuth";
 
 dotenv.config();
 
@@ -24,7 +24,11 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Apply general HR access to /documents directory
 app.use('/documents', verifyToken, verifyHR, express.static(`${__dirname}/documents`));
+
+// Allow employee to access their own documents at /documents/:userId
+app.use('/documents/:userId', verifyToken, verifyEmployee, express.static(`${__dirname}/documents`));
 
 app.use('/api/user', userRouter);
 app.use('/api/registration', registrationRouter);

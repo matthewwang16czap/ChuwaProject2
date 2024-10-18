@@ -22,7 +22,7 @@ interface EmployeeState {
     | "getMyProfile"
     | "getAllEmployees"
     | "getEmployee"
-    | "searchEmployees"
+    | "searchEmployeesByName"
     | null;
   message: string | null;
   error: string | null;
@@ -104,16 +104,16 @@ export const getEmployeeThunk = createAsyncThunk<
   }
 });
 
-export const searchEmployeesThunk = createAsyncThunk<
+export const searchEmployeesByNameThunk = createAsyncThunk<
   { message: string; employees: Employee[] },
   Partial<{ firstName: string; lastName: string; preferredName: string }>,
   { rejectValue: string }
->("employee/searchEmployees", async (searchParams, { rejectWithValue }) => {
+>("employee/searchEmployeesByName", async (searchParams, { rejectWithValue }) => {
   try {
     const response = await axiosInstance.post<{
       message: string;
       employees: Employee[];
-    }>(`${API_URL}/search`, searchParams);
+    }>(`${API_URL}/searchbyname`, searchParams);
     return response.data;
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
@@ -202,17 +202,17 @@ const employeeSlice = createSlice({
     });
 
     // Search Employees
-    builder.addCase(searchEmployeesThunk.pending, (state) => {
+    builder.addCase(searchEmployeesByNameThunk.pending, (state) => {
       state.status = "loading";
-      state.action = "searchEmployees";
+      state.action = "searchEmployeesByName";
     });
-    builder.addCase(searchEmployeesThunk.fulfilled, (state, action) => {
+    builder.addCase(searchEmployeesByNameThunk.fulfilled, (state, action) => {
       state.status = "succeeded";
       state.employees = action.payload.employees;
       state.message = action.payload.message;
       state.error = null;
     });
-    builder.addCase(searchEmployeesThunk.rejected, (state, action) => {
+    builder.addCase(searchEmployeesByNameThunk.rejected, (state, action) => {
       state.status = "failed";
       state.error = action.payload || "Failed to search employees";
     });
