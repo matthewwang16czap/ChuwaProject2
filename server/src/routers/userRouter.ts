@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.post('/login', login);
 router.post('/changepassword', verifyToken, changePassword);
-router.get('/allemployees', verifyToken, verifyHR, getAllEmployeeUsers);
+router.post('/allemployees', verifyToken, verifyHR, getAllEmployeeUsers);
 
 
 export default router;

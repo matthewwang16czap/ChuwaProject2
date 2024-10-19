@@ -165,9 +165,18 @@ export const getAllEmployeeUsers: RequestHandler = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    // Fetch all users who are not HR (employees) and populate employeeId and applicationId
-    const users = await User.find(
-      { role: { $ne: "HR" } },
+    // Extract search parameters from the request body
+    const { firstName, lastName, preferredName, nextStep } = req.body;
+
+    // Build the search query
+    const query: any = {};
+    if (firstName) query["employeeId.firstName"] = firstName;
+    if (lastName) query["employeeId.lastName"] = lastName;
+    if (preferredName) query["employeeId.preferredName"] = preferredName;
+
+    // Fetch users who are employees and match the search criteria
+    let users = await User.find(
+      { role: { $ne: "HR" }, ...query }, // Exclude HR users
       "_id username role email"
     )
       .populate({
@@ -180,8 +189,9 @@ export const getAllEmployeeUsers: RequestHandler = async (
           model: "Application",
         },
       })
-      .lean<IUserWithNextStep[]>();
+      .lean<IUserWithNextStep[]>(); // Ensure we get plain JavaScript objects for easier manipulation
 
+    // Process each user's application status and determine the next step
     users.forEach((user) => {
       if (user.employeeId?.applicationId.status === "NeverSubmitted") {
         user.nextStep = "SubmitApplication";
@@ -192,32 +202,83 @@ export const getAllEmployeeUsers: RequestHandler = async (
       } else {
         const documents =
           user.employeeId?.applicationId.workAuthorization.documents;
+        let allDocumentsCompleted = true;
+
         if (documents) {
           for (const document of documents) {
-            if (document.status === "NeverSubmitted") {
-              switch (document.name) {
-                case DocumentType.OPTReceipt:
-                  user.nextStep = "SubmitOPTReceipt";
-                  break;
-                case DocumentType.OPTEAD:
-                  user.nextStep = "SubmitOPTEAD";
-                  break;
-                case DocumentType.I983:
-                  user.nextStep = "SubmitI983";
-                  break;
-                case DocumentType.I20:
-                  user.nextStep = "SubmitI20";
-                  break;
-              }
-              break;
+            switch (document.status) {
+              case "NeverSubmitted":
+                allDocumentsCompleted = false;
+                switch (document.name) {
+                  case DocumentType.OPTReceipt:
+                    user.nextStep = "SubmitOPTReceipt";
+                    break;
+                  case DocumentType.OPTEAD:
+                    user.nextStep = "SubmitOPTEAD";
+                    break;
+                  case DocumentType.I983:
+                    user.nextStep = "SubmitI983";
+                    break;
+                  case DocumentType.I20:
+                    user.nextStep = "SubmitI20";
+                    break;
+                }
+                break;
+
+              case "Pending":
+                allDocumentsCompleted = false;
+                switch (document.name) {
+                  case DocumentType.OPTReceipt:
+                    user.nextStep = "WaitReviewOPTReceipt";
+                    break;
+                  case DocumentType.OPTEAD:
+                    user.nextStep = "WaitReviewOPTEAD";
+                    break;
+                  case DocumentType.I983:
+                    user.nextStep = "WaitReviewI983";
+                    break;
+                  case DocumentType.I20:
+                    user.nextStep = "WaitReviewI20";
+                    break;
+                }
+                break;
+
+              case "Rejected":
+                allDocumentsCompleted = false;
+                switch (document.name) {
+                  case DocumentType.OPTReceipt:
+                    user.nextStep = "ReSubmitOPTReceipt";
+                    break;
+                  case DocumentType.OPTEAD:
+                    user.nextStep = "ReSubmitOPTEAD";
+                    break;
+                  case DocumentType.I983:
+                    user.nextStep = "ReSubmitI983";
+                    break;
+                  case DocumentType.I20:
+                    user.nextStep = "ReSubmitI20";
+                    break;
+                }
+                break;
             }
+
+            if (!allDocumentsCompleted) break; // Exit if any document is not completed
           }
+        }
+
+        if (allDocumentsCompleted) {
+          user.nextStep = "Finished"; // If all documents are completed, mark as finished
         }
       }
     });
 
-    // Send the response with all users and their related data
-    res.status(200).json({ users });
+    // If nextStep is provided, filter users based on the calculated next step
+    if (nextStep) {
+      users = users.filter((user) => user.nextStep === nextStep);
+    }
+
+    // Return the filtered users along with their next step
+    res.status(200).json({ message: "Search employees successfully", users });
   } catch (error) {
     res.status(500).json({ message: "Error fetching employee users.", error });
   }

@@ -20,6 +20,8 @@ interface UserState {
   user: IPayload["user"] | null;
   loginStatus: "loading" | "succeeded" | "failed" | null;
   passwordChangeStatus: "loading" | "succeeded" | "failed" | null;
+  employeeUsers: IUser[];
+  employeeUsersStatus: "loading" | "succeeded" | "failed" | null;
   error: string | null;
 }
 
@@ -34,11 +36,41 @@ interface PasswordChangePayload {
   newPassword: string;
 }
 
+// Define the user response type
+interface IUser {
+  _id: string;
+  username: string;
+  role: string;
+  email: string;
+  employeeId: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    preferredName?: string;
+    ssn?: string;
+    dateOfBirth?: string;
+    gender?: string;
+    employment?: string;
+    applicationId?: {
+      workAuthorization?: {
+        documents: {
+          name: string;
+          status: string;
+        }[];
+      };
+      status: string;
+    };
+  };
+  nextStep?: string;
+}
+
 // Initial state
 const initialState: UserState = {
   user: null,
   loginStatus: null,
   passwordChangeStatus: null,
+  employeeUsers: [],
+  employeeUsersStatus: null,
   error: null,
 };
 
@@ -91,6 +123,31 @@ export const changeUserPassword = createAsyncThunk<
   }
 });
 
+// Define the AsyncThunk for fetching all employee users
+export const getAllEmployeeUsers = createAsyncThunk<
+  IUser[], // Return type
+  {
+    firstName?: string;
+    lastName?: string;
+    preferredName?: string;
+    nextStep?: string;
+  }, // Payload type (search parameters)
+  { rejectValue: string } // Rejection error type
+>("user/getAllEmployeeUsers", async (searchParams, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.post(
+      `${API_URL}/allemployees`,
+      searchParams
+    );
+    return response.data.users;
+  } catch (err: unknown) {
+    if (err instanceof AxiosError && err.response) {
+      return rejectWithValue(err.response.data.message);
+    }
+    return rejectWithValue("Error fetching employee users.");
+  }
+});
+
 const userSlice = createSlice({
   name: "user",
   initialState,
@@ -112,6 +169,7 @@ const userSlice = createSlice({
     clearStatus: (state) => {
       state.loginStatus = null;
       state.passwordChangeStatus = null;
+      state.employeeUsersStatus = null;
     },
   },
   extraReducers: (builder) => {
@@ -131,13 +189,13 @@ const userSlice = createSlice({
           state.user = null;
           state.loginStatus = "failed";
           state.error = "Unknown error";
-        }     
+        }
       })
       .addCase(
         login.rejected,
         (state, action: PayloadAction<string | undefined>) => {
           state.loginStatus = "failed";
-          state.error = action.payload as string ?? "Unknown error";
+          state.error = (action.payload as string) ?? "Unknown error";
         }
       );
 
@@ -154,7 +212,28 @@ const userSlice = createSlice({
         changeUserPassword.rejected,
         (state, action: PayloadAction<string | undefined>) => {
           state.passwordChangeStatus = "failed";
-          state.error = action.payload as string ?? "Unknown error";
+          state.error = (action.payload as string) ?? "Unknown error";
+        }
+      );
+
+    // Handle getAllEmployeeUsers actions
+    builder
+      .addCase(getAllEmployeeUsers.pending, (state) => {
+        state.employeeUsersStatus = "loading";
+        state.error = null;
+      })
+      .addCase(
+        getAllEmployeeUsers.fulfilled,
+        (state, action: PayloadAction<IUser[]>) => {
+          state.employeeUsersStatus = "succeeded";
+          state.employeeUsers = action.payload;
+        }
+      )
+      .addCase(
+        getAllEmployeeUsers.rejected,
+        (state, action: PayloadAction<string | undefined>) => {
+          state.employeeUsersStatus = "failed";
+          state.error = action.payload ?? "Unknown error";
         }
       );
   },
