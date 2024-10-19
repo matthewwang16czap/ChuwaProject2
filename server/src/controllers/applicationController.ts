@@ -25,6 +25,7 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     const allowedFileNames = [
       "OPTReceipt",
+      "OPTEAD",
       "I-983",
       "I-20",
       "ProfilePicture",
@@ -173,9 +174,7 @@ export const getApplication: RequestHandler = async (
       return;
     }
     const application = await Application.findById(applicationId);
-    res
-      .status(200)
-      .json({ message: "Get successfully", application });
+    res.status(200).json({ message: "Get successfully", application });
   } catch (error) {
     res.status(500).json({ message: "Get failed", error });
   }
@@ -419,7 +418,7 @@ export const decideDocument: RequestHandler = async (
     const { documentName, status, feedback } = req.body;
 
     // Allowed document names
-    const allowedDocuments = ["OPTReceipt", "I-983", "I-20"];
+    const allowedDocuments = ["OPTReceipt", "OPTEAD", "I-983", "I-20"];
 
     // Validate input
     if (
@@ -468,6 +467,12 @@ export const decideDocument: RequestHandler = async (
 
       // Push new document based on the current document being processed
       if (documentName === "OPTReceipt") {
+        application?.workAuthorization?.documents?.push({
+          name: "OPTEAD",
+          status: "NeverSubmitted",
+          url: null,
+        });
+      } else if (documentName === "OPTEAD") {
         application?.workAuthorization?.documents?.push({
           name: "I-983",
           status: "NeverSubmitted",

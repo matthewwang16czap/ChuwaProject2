@@ -14,6 +14,63 @@ interface IPayload {
   };
 }
 
+interface IDocument {
+  name: string;
+  url: string | null;
+  status: string;
+  feedback: string;
+  _id: string;
+}
+
+interface IWorkAuthorization {
+  visaType: string;
+  visaTitle: string;
+  startDate: Date | null;
+  endDate: Date | null;
+  documents: IDocument[];
+}
+
+interface IApplication {
+  _id: string;
+  workAuthorization: IWorkAuthorization;
+  status: string;
+}
+
+interface IEmployment {
+  visaType: string;
+  visaTitle: string;
+  startDate: Date | null;
+  endDate: Date | null;
+}
+
+interface IEmployee {
+  _id: string;
+  applicationId: IApplication;
+  firstName: string;
+  lastName: string;
+  preferredName?: string;
+  ssn: string;
+  dateOfBirth: Date;
+  gender: string;
+  employment: IEmployment;
+}
+
+interface IUserWithNextStep {
+  _id: string;
+  username: string;
+  email: string;
+  role: string;
+  employeeId?: IEmployee;
+  nextStep?: string;
+}
+
+enum DocumentType {
+  OPTReceipt = "OPTReceipt",
+  OPTEAD = "OPTEAD",
+  I983 = "I-983",
+  I20 = "I-20",
+}
+
 // Controller for user login
 export const login: RequestHandler = async (
   req: Request,
@@ -31,14 +88,20 @@ export const login: RequestHandler = async (
     }
 
     // Verify the password
-    const isMatch = await user.verifyPassword(password); 
+    const isMatch = await user.verifyPassword(password);
     if (!isMatch) {
       res.status(400).json({ message: "Invalid password." });
       return;
     }
 
     // Create JWT payload
-    const payload: IPayload = { user: { userId: user._id?.toString(), role: user.role, email: user.email } };
+    const payload: IPayload = {
+      user: {
+        userId: user._id?.toString(),
+        role: user.role,
+        email: user.email,
+      },
+    };
 
     // Get employeeId and applicationId if the user is not an HR
     if (user.role !== "HR") {
@@ -46,7 +109,7 @@ export const login: RequestHandler = async (
         user.employeeId,
         "applicationId"
       );
-      payload.user.employeeId = user.employeeId?.toString(); 
+      payload.user.employeeId = user.employeeId?.toString();
       payload.user.applicationId = employee?.applicationId?.toString();
     }
 
@@ -103,15 +166,55 @@ export const getAllEmployeeUsers: RequestHandler = async (
 ): Promise<void> => {
   try {
     // Fetch all users who are not HR (employees) and populate employeeId and applicationId
-    const users = await User.find({ role: { $ne: "HR" } })
+    const users = await User.find(
+      { role: { $ne: "HR" } },
+      "_id username role email"
+    )
       .populate({
-        path: 'employeeId', // Populate employeeId from Employee schema
+        path: "employeeId", // Populate employeeId from Employee schema
+        select:
+          "_id firstName lastName preferredName ssn dateOfBirth gender employment",
         populate: {
-          path: 'applicationId', // Populate applicationId from Application schema
-          model: 'Application'
+          path: "applicationId", // Populate applicationId from Application schema
+          select: "workAuthorization status",
+          model: "Application",
         },
       })
-      .lean();
+      .lean<IUserWithNextStep[]>();
+
+    users.forEach((user) => {
+      if (user.employeeId?.applicationId.status === "NeverSubmitted") {
+        user.nextStep = "SubmitApplication";
+      } else if (user.employeeId?.applicationId.status === "Pending") {
+        user.nextStep = "WaitReviewApplication";
+      } else if (user.employeeId?.applicationId.status === "Rejected") {
+        user.nextStep = "ReSubmitApplication";
+      } else {
+        const documents =
+          user.employeeId?.applicationId.workAuthorization.documents;
+        if (documents) {
+          for (const document of documents) {
+            if (document.status === "NeverSubmitted") {
+              switch (document.name) {
+                case DocumentType.OPTReceipt:
+                  user.nextStep = "SubmitOPTReceipt";
+                  break;
+                case DocumentType.OPTEAD:
+                  user.nextStep = "SubmitOPTEAD";
+                  break;
+                case DocumentType.I983:
+                  user.nextStep = "SubmitI983";
+                  break;
+                case DocumentType.I20:
+                  user.nextStep = "SubmitI20";
+                  break;
+              }
+              break;
+            }
+          }
+        }
+      }
+    });
 
     // Send the response with all users and their related data
     res.status(200).json({ users });
