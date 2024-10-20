@@ -166,7 +166,7 @@ const ApplicationSchema: Schema = new Schema({
         name: {
           type: String,
           default: "OPTReceipt",
-          enum: ["OPTReceipt", "I-983", "I-20"],
+          enum: ["OPTReceipt", "OPTEAD", "I-983", "I-20"],
         },
         url: { type: String, default: "" },
         status: {
