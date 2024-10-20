@@ -161,3 +161,21 @@ export const getRegistrationHistoryByEmail = async (
       .json({ message: "Error retrieving registration history", error });
   }
 };
+
+export const getAllRegistrations = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const registrations = await Registration.find();
+    res.status(200).json({
+      message: "Registrations fetched",
+      registrations: registrations,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error retrieving registrations", error });
+  }
+};
