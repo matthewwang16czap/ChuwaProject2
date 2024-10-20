@@ -9,7 +9,7 @@ interface InvitationPayload {
   email: string;
 }
 
-interface RegistrationPayload {
+interface RegisterPayload {
   email: string;
   username: string;
   password: string;
@@ -31,21 +31,36 @@ interface RegistrationHistoryResponse {
   registrationHistory: RegistrationHistoryDocument[];
 }
 
+interface Registration {
+  email: string;
+  registrationHistory: RegistrationHistoryDocument[];
+  userId: string;
+}
+
+interface RegistrationsResponse {
+  message: string;
+  registrations: Registration[];
+}
+
 // Define types for the slice's state
 interface RegistrationState {
   invitationStatus: "loading" | "succeeded" | "failed" | null;
-  registrationStatus: "loading" | "succeeded" | "failed" | null;
+  registerStatus: "loading" | "succeeded" | "failed" | null;
   registrationHistoryStatus: "loading" | "succeeded" | "failed" | null;
   registrationHistory: RegistrationHistoryDocument[] | null;
+  registrationsStatus: "loading" | "succeeded" | "failed" | null;
+  registrations: Registration[] | null;
   error: string | null;
 }
 
 // Initial state
 const initialState: RegistrationState = {
   invitationStatus: null,
-  registrationStatus: null,
+  registerStatus: null,
   registrationHistoryStatus: null,
   registrationHistory: null,
+  registrationsStatus: null,
+  registrations: null,
   error: null,
 };
 
@@ -74,18 +89,19 @@ export const sendInvitation = createAsyncThunk<
 // AsyncThunk to register a user
 export const register = createAsyncThunk<
   void,
-  RegistrationPayload,
+  RegisterPayload,
   { rejectValue: string }
->('registration/register', async (registrationData, { rejectWithValue }) => {
+>("registration/register", async (registrationData, { rejectWithValue }) => {
   try {
     await axiosInstance.post(`${API_URL}/register`, registrationData);
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
       const errorData = err.response.data;
-      const errorMessage = errorData.message || errorData.error || 'Error during registration.';
+      const errorMessage =
+        errorData.message || errorData.error || "Error during registration.";
       return rejectWithValue(errorMessage);
     }
-    return rejectWithValue('Unknown error occurred');
+    return rejectWithValue("Unknown error occurred");
   }
 });
 
@@ -120,15 +136,35 @@ export const getRegistrationHistory = createAsyncThunk<
   }
 );
 
+export const getRegistrations = createAsyncThunk<
+  RegistrationsResponse, // Return type
+  void, // Argument type
+  { rejectValue: string } // Reject value type
+>("registration/getRegistrations", async (_, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.get<RegistrationsResponse>(
+      `${API_URL}/all`
+    );
+    return response.data; // Return the data from the response
+  } catch (err: unknown) {
+    if (err instanceof AxiosError && err.response) {
+      return rejectWithValue(err.response.data.message);
+    }
+    return rejectWithValue("Unknown error occurred");
+  }
+});
+
 const registrationSlice = createSlice({
   name: "registration",
   initialState,
   reducers: {
     resetStatus: (state) => {
       state.invitationStatus = null;
-      state.registrationStatus = null;
+      state.registerStatus = null;
       state.registrationHistoryStatus = null;
       state.registrationHistory = null;
+      state.registrationsStatus = null;
+      state.registrations = null;
       state.error = null;
     },
   },
@@ -144,37 +180,48 @@ const registrationSlice = createSlice({
         sendInvitation.rejected,
         (state, action: PayloadAction<string | undefined>) => {
           state.invitationStatus = "failed";
-          state.error = action.payload as string ?? "Unknown error";
+          state.error = (action.payload as string) ?? "Unknown error";
         }
       )
       .addCase(register.pending, (state) => {
-        state.registrationStatus = "loading";
+        state.registerStatus = "loading";
       })
       .addCase(register.fulfilled, (state) => {
-        state.registrationStatus = "succeeded";
+        state.registerStatus = "succeeded";
       })
       .addCase(
         register.rejected,
         (state, action: PayloadAction<string | undefined>) => {
-          state.registrationStatus = "failed";
-          state.error = action.payload as string ?? "Unknown error";
+          state.registerStatus = "failed";
+          state.error = (action.payload as string) ?? "Unknown error";
         }
       )
       .addCase(getRegistrationHistory.pending, (state) => {
         state.registrationHistoryStatus = "loading";
       })
-      .addCase(
-        getRegistrationHistory.fulfilled,
-        (state, action) => {
-          state.registrationHistoryStatus = "succeeded";
-          state.registrationHistory = action.payload.registrationHistory;
-        }
-      )
+      .addCase(getRegistrationHistory.fulfilled, (state, action) => {
+        state.registrationHistoryStatus = "succeeded";
+        state.registrationHistory = action.payload.registrationHistory;
+      })
       .addCase(
         getRegistrationHistory.rejected,
         (state, action: PayloadAction<string | undefined>) => {
           state.registrationHistoryStatus = "failed";
-          state.error = action.payload as string ?? "Unknown error";
+          state.error = (action.payload as string) ?? "Unknown error";
+        }
+      )
+      .addCase(getRegistrations.pending, (state) => {
+        state.registrationsStatus = "loading";
+      })
+      .addCase(getRegistrations.fulfilled, (state, action) => {
+        state.registrationsStatus = "succeeded";
+        state.registrations = action.payload.registrations;
+      })
+      .addCase(
+        getRegistrations.rejected,
+        (state, action: PayloadAction<string | undefined>) => {
+          state.registrationsStatus = "failed";
+          state.error = (action.payload as string) ?? "Unknown error";
         }
       );
   },

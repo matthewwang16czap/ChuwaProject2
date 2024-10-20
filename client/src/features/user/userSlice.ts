@@ -127,9 +127,7 @@ export const changeUserPassword = createAsyncThunk<
 export const getAllEmployeeUsers = createAsyncThunk<
   IUser[], // Return type
   {
-    firstName?: string;
-    lastName?: string;
-    preferredName?: string;
+    name?: string;
     nextStep?: string;
   }, // Payload type (search parameters)
   { rejectValue: string } // Rejection error type
