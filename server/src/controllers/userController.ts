@@ -165,18 +165,11 @@ export const getAllEmployeeUsers: RequestHandler = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    // Extract search parameters from the request body
-    const { firstName, lastName, preferredName, nextStep } = req.body;
+    const { name, nextStep } = req.body;
 
-    // Build the search query
-    const query: any = {};
-    if (firstName) query["employeeId.firstName"] = firstName;
-    if (lastName) query["employeeId.lastName"] = lastName;
-    if (preferredName) query["employeeId.preferredName"] = preferredName;
-
-    // Fetch users who are employees and match the search criteria
+    // Fetch all users who are employees (excluding HR)
     let users = await User.find(
-      { role: { $ne: "HR" }, ...query }, // Exclude HR users
+      { role: { $ne: "HR" } }, // Exclude HR users
       "_id username role email"
     )
       .populate({
@@ -190,6 +183,19 @@ export const getAllEmployeeUsers: RequestHandler = async (
         },
       })
       .lean<IUserWithNextStep[]>(); // Ensure we get plain JavaScript objects for easier manipulation
+
+    // If a name is provided, filter users by firstName, lastName, or preferredName (case-insensitive)
+    if (name) {
+      const nameLowerCase = name.toLowerCase();
+      users = users.filter((user) => {
+        const { firstName, lastName, preferredName } = user.employeeId || {};
+        return (
+          firstName?.toLowerCase().includes(nameLowerCase) ||
+          lastName?.toLowerCase().includes(nameLowerCase) ||
+          preferredName?.toLowerCase().includes(nameLowerCase)
+        );
+      });
+    }
 
     // Process each user's application status and determine the next step
     users.forEach((user) => {
