@@ -99,16 +99,28 @@ export const uploadFileThunk = createAsyncThunk<
   }
 });
 
-export const getMyApplicationThunk = createAsyncThunk(
+export const getMyApplicationThunk = createAsyncThunk<
+  { application: any }, // Adjust the type as needed
+  void,
+  { rejectValue: string }
+>(
   "application/getMyApplication",
   async (_, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get(`${API_URL}/myapplication`);
-      return response.data;
+      console.log("API Response:", response.data);
+      if (response.data && response.data.application) {
+        return { application: response.data.application };
+      } else {
+        console.error("Invalid response structure");
+        return rejectWithValue("Invalid response structure");
+      }
     } catch (err: unknown) {
-      if (err instanceof AxiosError && err.response) {
+      if (err instanceof AxiosError && err.response && err.response.data) {
+        console.error("API Error:", err.response.data.message);
         return rejectWithValue(err.response.data.message);
       }
+      console.error("Unknown Error");
       return rejectWithValue("Unknown error");
     }
   }

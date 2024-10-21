@@ -43,6 +43,7 @@ export const sendInvitation = async (
     subject: "registration email",
     text: `Please use the following link to complete your registration: ${process.env.FRONTEND_URL}/register?token=${token}`,
   };
+  console.log(mailOptions.text);
   try {
     await transporter.sendMail(mailOptions);
     // Add to registration history
