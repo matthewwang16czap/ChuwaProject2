@@ -5,11 +5,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import {
   sendInvitation,
-  getRegistrationHistory,
+  getRegistrations,
   resetStatus,
-} from '../features/registration/registrationSlice'; // Adjust the path as needed
-import { RootState, AppDispatch } from '../app/store'; // Adjust the path as needed
-import PrototypeForm, { Field } from '../forms/PrototypeForm'; // Adjust the path as needed
+} from '../features/registration/registrationSlice';
+import { RootState, AppDispatch } from '../app/store';
+import PrototypeForm, { Field } from '../forms/PrototypeForm';
 import { Table, Typography, Alert, Spin } from 'antd';
 
 const { Title } = Typography;
@@ -19,6 +19,7 @@ interface InvitationFormInputs {
   email: string;
 }
 
+// Update the RegistrationHistoryRecord interface
 interface RegistrationHistoryRecord {
   key: string;
   email: string;
@@ -33,8 +34,7 @@ const HiringManagementPage: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const {
     invitationStatus,
-    registrationHistoryStatus,
-    registrationHistory,
+    registrationsStatus,
     error,
   } = useSelector((state: RootState) => state.registration);
 
@@ -45,37 +45,60 @@ const HiringManagementPage: React.FC = () => {
   // Local state to manage registration history records
   const [historyRecords, setHistoryRecords] = useState<RegistrationHistoryRecord[]>([]);
 
-  // Fetch all registration history on component mount
+  // Fetch all registrations on component mount
   useEffect(() => {
-    fetchAllRegistrationHistory();
+    fetchAllRegistrations();
   }, []);
 
-  // Fetch all registration history function
-  const fetchAllRegistrationHistory = async () => {
+  // Fetch all registrations function
+  const fetchAllRegistrations = async () => {
     try {
-      // Dispatch the thunk with fetchAll: true
-      const resultAction = await dispatch(getRegistrationHistory({ fetchAll: true }));
+      // Dispatch the thunk to get all registrations
+      const resultAction = await dispatch(getRegistrations());
 
-      if (getRegistrationHistory.fulfilled.match(resultAction)) {
-        const fetchedHistory = resultAction.payload.registrationHistory;
+      if (getRegistrations.fulfilled.match(resultAction)) {
+        const fetchedRegistrations = resultAction.payload.registrations;
 
-        // Transform fetchedHistory to RegistrationHistoryRecord[]
-        const records: RegistrationHistoryRecord[] = fetchedHistory.map((record) => ({
-          key: record.token, // Using token as unique key
-          email: record.email || 'N/A',
-          fullName: record.fullName || 'N/A',
-          registrationLink: generateRegistrationLink(record.token),
-          status: record.status || 'Not Submitted',
-          createdAt: record.createdAt,
-          expireAt: record.expireAt,
-        }));
+        // Transform fetchedRegistrations to RegistrationHistoryRecord[]
+        const records: RegistrationHistoryRecord[] = [];
+
+        // Iterate over each registration
+        for (const registration of fetchedRegistrations) {
+          const email = registration.email || 'N/A';
+          const userId = registration.userId; // May be null if user hasn't registered yet
+
+          // Fetch user details if userId is available to get the full name
+          let fullName = 'N/A';
+          let status: 'Submitted' | 'Not Submitted' = 'Not Submitted';
+
+          if (userId) {
+            // If userId exists, set status to 'Submitted' and get full name
+            // Assuming registration includes fullName when user has registered
+            fullName = registration.fullName || 'N/A';
+            status = 'Submitted';
+          }
+
+          // Map registrationHistory entries
+          registration.registrationHistory.forEach((history) => {
+            records.push({
+              key: history.token, // Using token as unique key
+              email,
+              fullName,
+              registrationLink: generateRegistrationLink(history.token),
+              status,
+              createdAt: history.createdAt,
+              expireAt: history.expireAt,
+            });
+          });
+        }
+
         setHistoryRecords(records);
       } else {
         // Handle rejected state
-        console.error('Failed to fetch registration history:', resultAction.payload);
+        console.error('Failed to fetch registrations:', resultAction.payload);
       }
     } catch (err) {
-      console.error('Failed to fetch registration history:', err);
+      console.error('Failed to fetch registrations:', err);
     }
   };
 
@@ -87,7 +110,10 @@ const HiringManagementPage: React.FC = () => {
   // Handle form submission
   const onSubmit: SubmitHandler<InvitationFormInputs> = (data) => {
     dispatch(resetStatus()); // Reset any previous status or error
-    dispatch(sendInvitation({ email: data.email }));
+    dispatch(sendInvitation({ email: data.email })).then(() => {
+      // Refresh the registration history after sending the invitation
+      fetchAllRegistrations();
+    });
   };
 
   // Effect to handle invitation status changes
@@ -95,8 +121,7 @@ const HiringManagementPage: React.FC = () => {
     if (invitationStatus === 'succeeded') {
       // Reset the form
       reset();
-      // Refresh the registration history
-      fetchAllRegistrationHistory();
+      // Already fetching registrations in the onSubmit handler
     }
   }, [invitationStatus, reset]);
 
@@ -200,7 +225,7 @@ const HiringManagementPage: React.FC = () => {
         <PrototypeForm
           fields={fields}
           onSubmit={onSubmit}
-          methods={methods} // Pass the methods prop correctly
+          methods={methods}
           submitButtonLabel={
             invitationStatus === 'loading' ? 'Sending...' : 'Generate Token and Send Email'
           }
@@ -213,11 +238,11 @@ const HiringManagementPage: React.FC = () => {
         <Title level={4} className="mb-4">
           Registration Token History
         </Title>
-        {registrationHistoryStatus === 'loading' ? (
+        {registrationsStatus === 'loading' ? (
           <div className="flex justify-center items-center my-10">
             <Spin size="large" />
           </div>
-        ) : registrationHistoryStatus === 'failed' && error ? (
+        ) : registrationsStatus === 'failed' && error ? (
           <Alert
             message="Error"
             description={typeof error === 'string' ? error : JSON.stringify(error)}
@@ -234,7 +259,7 @@ const HiringManagementPage: React.FC = () => {
             bordered
           />
         )}
-        {registrationHistoryStatus === 'succeeded' && historyRecords.length === 0 && (
+        {registrationsStatus === 'succeeded' && historyRecords.length === 0 && (
           <Alert
             message="No Records Found"
             description="No registration tokens have been sent yet."
