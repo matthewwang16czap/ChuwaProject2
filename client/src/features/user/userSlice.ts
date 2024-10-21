@@ -99,6 +99,7 @@ export const login = createAsyncThunk<
     const token = response.data.token;
     // Store the token in localStorage
     localStorage.setItem("jwtToken", token);
+    console.log(token);
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
       return rejectWithValue(err.response.data.message);

@@ -1,9 +1,10 @@
 // EmployeeProfilesPage.tsx
-import React, { useEffect, useState } from 'react';
+
+import React, { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   getAllEmployeesThunk,
-  searchEmployeesThunk,
+  searchEmployeesByNameThunk,
   Employee,
 } from '../features/employee/employeeSlice';
 import { RootState, AppDispatch } from '../app/store';
@@ -35,21 +36,24 @@ const EmployeeProfilesPage: React.FC = () => {
   }, [dispatch]);
 
   // Debounced search function to reduce API calls
-  const debouncedSearch = debounce((query: string) => {
-    if (query.trim() === '') {
-      // If search query is empty, fetch all employees
-      dispatch(getAllEmployeesThunk());
-    } else {
-      // Otherwise, perform search
-      dispatch(
-        searchEmployeesThunk({
-          firstName: query,
-          lastName: query,
-          preferredName: query,
-        })
-      );
-    }
-  }, 300); // 300ms debounce
+  const debouncedSearch = useCallback(
+    debounce((query: string) => {
+      if (query.trim() === '') {
+        // If search query is empty, fetch all employees
+        dispatch(getAllEmployeesThunk());
+      } else {
+        // Otherwise, perform search
+        dispatch(
+          searchEmployeesByNameThunk({
+            firstName: query,
+            lastName: query,
+            preferredName: query,
+          })
+        );
+      }
+    }, 300),
+    [dispatch]
+  ); // 300ms debounce
 
   // Handle search input changes
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,9 +92,7 @@ const EmployeeProfilesPage: React.FC = () => {
           onClick={() => handleNameClick(record._id)}
           className="text-blue-500 hover:underline cursor-pointer"
         >
-          {record.preferredName
-            ? `${record.firstName} "${record.preferredName}" ${record.lastName}`
-            : `${record.firstName} ${record.lastName}`}
+          {`${record.firstName} ${record.middleName || ''} ${record.lastName}`.trim()}
         </a>
       ),
       sorter: (a: Employee, b: Employee) =>
@@ -106,13 +108,20 @@ const EmployeeProfilesPage: React.FC = () => {
       title: 'Work Authorization Title',
       dataIndex: 'workAuthorizationTitle',
       key: 'workAuthorizationTitle',
-      render: (title: string) => title || 'N/A',
+      render: (_: any, record: Employee) => {
+        const title =
+          record.workAuthorization?.visaType ||
+          record.citizenship ||
+          'N/A';
+        return title;
+      },
     },
     {
       title: 'Phone Number',
       dataIndex: 'phoneNumber',
       key: 'phoneNumber',
-      render: (phone: string) => formatPhoneNumber(phone),
+      render: (_: any, record: Employee) =>
+        formatPhoneNumber(record.cellPhone || record.workPhone || ''),
     },
     {
       title: 'Email',
