@@ -17,6 +17,7 @@ import PrivateRoute from './components/PrivateRoute';
 import { Provider } from 'react-redux';
 import store from './app/store';
 import EmployeeProfilesPage from './pages/EmployeeProfilesPage';
+import DocumentViewer from './pages/DocumentViewer';
 
 function App() {
   return (
@@ -119,7 +120,16 @@ function App() {
             </PrivateRoute>
           }
         />
-
+        <Route
+          path="/document/:userId/:filename"
+          element={
+            <PrivateRoute roles={['Employee', 'HR']}>
+              <MainLayout>
+                <DocumentViewer />
+              </MainLayout>
+            </PrivateRoute>
+          }
+        />  
 
         {/* Catch-All Route */}
         <Route path="*" element={<Navigate to="/" replace />} />

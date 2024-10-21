@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   getAllEmployeesThunk,
-  searchEmployeesThunk,
+  searchEmployeesByNameThunk,
   Employee,
 } from '../features/employee/employeeSlice';
 import { RootState, AppDispatch } from '../app/store';
@@ -42,7 +42,7 @@ const EmployeeProfilesPage: React.FC = () => {
     } else {
       // Otherwise, perform search
       dispatch(
-        searchEmployeesThunk({
+        searchEmployeesByNameThunk({
           firstName: query,
           lastName: query,
           preferredName: query,
