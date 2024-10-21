@@ -17,6 +17,9 @@ import PrivateRoute from './components/PrivateRoute';
 import { Provider } from 'react-redux';
 import store from './app/store';
 import EmployeeProfilesPage from './pages/EmployeeProfilesPage';
+import EmployeeProfilePage from './pages/EmployeeProfilePage';
+import OnboardingApplicationDetails from './pages/OnboardingApplicationDetails';
+import ReviewOnboardingApplication from './pages/ReviewOnboardingApplication';
 
 function App() {
   return (
@@ -93,12 +96,21 @@ function App() {
           element={
             <PrivateRoute roles={['HR']}>
               <MainLayout>
-              <div>HR Dashboard</div>
+                <ReviewOnboardingApplication/>
               </MainLayout>
             </PrivateRoute>
           }
         />
-
+        <Route
+          path="/onboarding-application/:applicationId"
+          element={
+            <PrivateRoute roles={['HR']}>
+              <MainLayout>
+                <OnboardingApplicationDetails/>
+              </MainLayout>
+            </PrivateRoute>
+          }
+        />
         <Route
           path="/send-invitation"
           element={
@@ -115,6 +127,16 @@ function App() {
             <PrivateRoute>
               <MainLayout>
                 <EmployeeProfilesPage />
+              </MainLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/employee-profile/:employeeId"
+          element={
+            <PrivateRoute>
+              <MainLayout>
+                <EmployeeProfilePage/>
               </MainLayout>
             </PrivateRoute>
           }
