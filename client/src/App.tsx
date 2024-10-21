@@ -9,7 +9,7 @@ import PersonalInfoPage from './pages/PersonalInfoPage';
 import Logout from './components/Logout';
 import LoginPage from './pages/LoginPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
-import SendInvitationPage from './pages/SendInvitationPage';
+import SendInvitationPage from './pages/HiringManagementPage';
 import RegisterPage from './pages/RegisterPage';
 import ChangePassword from './pages/ChangePassword';
 import ProfilePage from './pages/ProfilePage'
@@ -17,6 +17,9 @@ import PrivateRoute from './components/PrivateRoute';
 import { Provider } from 'react-redux';
 import store from './app/store';
 import EmployeeProfilesPage from './pages/EmployeeProfilesPage';
+import EmployeeProfilePage from './pages/EmployeeProfilePage';
+import OnboardingApplicationDetails from './pages/OnboardingApplicationDetails';
+import ReviewOnboardingApplication from './pages/ReviewOnboardingApplication';
 import DocumentViewer from './pages/DocumentViewer';
 
 function App() {
@@ -94,8 +97,17 @@ function App() {
           element={
             <PrivateRoute roles={['HR']}>
               <MainLayout>
-                {/* Replace with your HR-specific page/component */}
-                <div>HR Dashboard</div>
+                <ReviewOnboardingApplication/>
+              </MainLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/onboarding-application/:applicationId"
+          element={
+            <PrivateRoute roles={['HR']}>
+              <MainLayout>
+                <OnboardingApplicationDetails/>
               </MainLayout>
             </PrivateRoute>
           }
@@ -120,6 +132,17 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/employee-profile/:employeeId"
+          element={
+            <PrivateRoute>
+              <MainLayout>
+                <EmployeeProfilePage/>
+              </MainLayout>
+            </PrivateRoute>
+          }
+        />
+
         <Route
           path="/document/:userId/:filename"
           element={
