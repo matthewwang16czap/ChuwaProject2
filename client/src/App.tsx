@@ -20,6 +20,7 @@ import EmployeeProfilesPage from './pages/EmployeeProfilesPage';
 import EmployeeProfilePage from './pages/EmployeeProfilePage';
 import OnboardingApplicationDetails from './pages/OnboardingApplicationDetails';
 import ReviewOnboardingApplication from './pages/ReviewOnboardingApplication';
+import DocumentViewer from './pages/DocumentViewer';
 
 function App() {
   return (
@@ -142,6 +143,16 @@ function App() {
           }
         />
 
+        <Route
+          path="/document/:userId/:filename"
+          element={
+            <PrivateRoute roles={['Employee', 'HR']}>
+              <MainLayout>
+                <DocumentViewer />
+              </MainLayout>
+            </PrivateRoute>
+          }
+        />  
 
         {/* Catch-All Route */}
         <Route path="*" element={<Navigate to="/" replace />} />

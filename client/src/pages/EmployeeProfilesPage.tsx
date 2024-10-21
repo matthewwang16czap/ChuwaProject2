@@ -36,6 +36,21 @@ const EmployeeProfilesPage: React.FC = () => {
   }, [dispatch]);
 
   // Debounced search function to reduce API calls
+  const debouncedSearch = debounce((query: string) => {
+    if (query.trim() === '') {
+      // If search query is empty, fetch all employees
+      dispatch(getAllEmployeesThunk());
+    } else {
+      // Otherwise, perform search
+      dispatch(
+        searchEmployeesByNameThunk({
+          firstName: query,
+          lastName: query,
+          preferredName: query,
+        })
+      );
+    }
+  }, 300); // 300ms debounce
   const debouncedSearch = useCallback(
     debounce((query: string) => {
       if (query.trim() === '') {
