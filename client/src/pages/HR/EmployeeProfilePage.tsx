@@ -3,13 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import { Spin, Typography, Alert, Divider } from 'antd';
 import axiosInstance from '../../api/axiosInstance'; // Adjust the path as needed
-import moment from 'moment'; // Ensure moment is installed: npm install moment
+import axios from 'axios';
+import { useParams } from 'react-router-dom';
+// import moment from 'moment'; // Ensure moment is installed: npm install moment
 
 const { Title, Paragraph } = Typography;
-
-interface EmployeeProfilePageProps {
-  employeeId: string;
-}
 
 interface Employee {
   _id: string;
@@ -59,7 +57,8 @@ interface Employee {
   [key: string]: unknown;
 }
 
-const EmployeeProfilePage: React.FC<EmployeeProfilePageProps> = ({ employeeId }) => {
+const EmployeeProfilePage: React.FC = () => {
+  const { employeeId } = useParams<{ employeeId: string }>();
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -134,10 +133,10 @@ const EmployeeProfilePage: React.FC<EmployeeProfilePageProps> = ({ employeeId })
     return `(${part1}) ${part2}-${part3}`;
   };
 
-  const formatDate = (dateString: string): string => {
-    if (!dateString) return 'N/A';
-    return moment(dateString).format('MMMM Do, YYYY');
-  };
+  // const formatDate = (dateString: string): string => {
+  //   if (!dateString) return 'N/A';
+  //   return moment(dateString).format('MMMM Do, YYYY');
+  // };
 
   // Display employee information (same as before)
   return (
