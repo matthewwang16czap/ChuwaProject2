@@ -47,7 +47,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       ? [
           {
             key: '/hr/dashboard',
-            label: <Link to="/hr/dashboard">HR Dashboard</Link>,
+            label: <Link to="/hr/dashboard">Onboarding Application Review</Link>,
           },
           {
             key: '/employeeList',
