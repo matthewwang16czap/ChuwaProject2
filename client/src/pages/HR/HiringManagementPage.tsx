@@ -7,9 +7,9 @@ import {
   sendInvitation,
   getRegistrations,
   resetStatus,
-} from '../features/registration/registrationSlice';
-import { RootState, AppDispatch } from '../app/store';
-import PrototypeForm, { Field } from '../forms/PrototypeForm';
+} from '../../features/registration/registrationSlice';
+import { RootState, AppDispatch } from '../../app/store';
+import PrototypeForm, { Field } from '../../forms/PrototypeForm';
 import { Table, Typography, Alert, Spin } from 'antd';
 
 const { Title } = Typography;

@@ -9,17 +9,16 @@ import PersonalInfoPage from './pages/PersonalInfoPage';
 import Logout from './components/Logout';
 import LoginPage from './pages/LoginPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
-import SendInvitationPage from './pages/HiringManagementPage';
+import SendInvitationPage from './pages/HR/HiringManagementPage';
 import RegisterPage from './pages/RegisterPage';
 import ChangePassword from './pages/ChangePassword';
 import ProfilePage from './pages/ProfilePage'
 import PrivateRoute from './components/PrivateRoute';
 import { Provider } from 'react-redux';
 import store from './app/store';
-import EmployeeProfilesPage from './pages/EmployeeProfilesPage';
-import EmployeeProfilePage from './pages/EmployeeProfilePage';
-import OnboardingApplicationDetails from './pages/OnboardingApplicationDetails';
-import ReviewOnboardingApplication from './pages/ReviewOnboardingApplication';
+import EmployeeProfilesPage from './pages/HR/EmployeeProfilesPage';
+import EmployeeProfilePage from './pages/HR/EmployeeProfilePage';
+import ReviewOnboardingApplication from './pages/HR/ReviewOnboardingApplication';
 import DocumentViewer from './pages/DocumentViewer';
 
 function App() {
@@ -68,7 +67,16 @@ function App() {
             </PrivateRoute>
           }
         />  
-
+        <Route
+          path="/hr/documents/:userId/:filename"
+          element={
+            <PrivateRoute roles={['Employee', 'HR']}>
+              <MainLayout>
+                <DocumentViewer />
+              </MainLayout>
+            </PrivateRoute>
+          }
+        />  
         {/* Employee-Only Routes */}
         <Route
           path="/onboarding"
@@ -102,16 +110,7 @@ function App() {
             </PrivateRoute>
           }
         />
-        <Route
-          path="/onboarding-application/:applicationId"
-          element={
-            <PrivateRoute roles={['HR']}>
-              <MainLayout>
-                <OnboardingApplicationDetails/>
-              </MainLayout>
-            </PrivateRoute>
-          }
-        />
+
         <Route
           path="/send-invitation"
           element={
@@ -143,16 +142,7 @@ function App() {
           }
         />
 
-        <Route
-          path="/document/:userId/:filename"
-          element={
-            <PrivateRoute roles={['Employee', 'HR']}>
-              <MainLayout>
-                <DocumentViewer />
-              </MainLayout>
-            </PrivateRoute>
-          }
-        />  
+
 
         {/* Catch-All Route */}
         <Route path="*" element={<Navigate to="/" replace />} />

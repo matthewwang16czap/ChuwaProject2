@@ -12,7 +12,7 @@ import {
   submitApplicationThunk,
   uploadFileThunk,
 } from '../features/application/applicationSlice';
-import { fetchDocument } from '../features/document/documentSlice'; // Import fetchDocument
+import { fetchDocument } from '../features/document/documentSlice';
 import { Alert, Spin, notification, Typography, Modal } from 'antd';
 import { Document, Page, pdfjs } from 'react-pdf';
 
@@ -66,7 +66,6 @@ const OnboardingPage: React.FC = () => {
     // Update form with fetched application data
     if (application) {
       reset(application);
-      console.log('application.status:', application.status);
     }
   }, [application, reset]);
 
@@ -91,15 +90,21 @@ const OnboardingPage: React.FC = () => {
     };
   }, [documentState.document]);
 
+  // Updated handleViewDocument function
   const handleViewDocument = async (url: string, documentName: string) => {
     try {
-      // Extract userId and filename from the URL
-      // Assuming URL is in the format `/documents/{userId}/{filename}`
-      const urlParts = url.split('/');
-      const userId = user?.userId;
-      const filename = urlParts[2].split('.')[0];
-      console.log(userId);
-      console.log(filename);
+      // Remove leading slash if present
+      if (url.startsWith('/')) {
+        url = url.substring(1);
+      }
+      // Split the URL into parts and remove empty strings
+      const urlParts = url.split('/').filter(Boolean);
+      // Assuming URL is in the format 'documents/{userId}/{filename}'
+      const userId = urlParts[1]; // 'documents' is at index 0
+      const filename = urlParts.slice(2).join('/'); // In case filename contains '/'
+      console.log('userId:', userId);
+      console.log('filename:', filename);
+
       // Dispatch fetchDocument thunk
       await dispatch(fetchDocument({ userId, filename })).unwrap();
 
@@ -129,6 +134,7 @@ const OnboardingPage: React.FC = () => {
   const onDocumentLoadSuccess = ({ numPages }: any) => {
     setNumPages(numPages);
   };
+
 
   const getFields = (): Field<any>[] => {
     const fields: Field<any>[] = [
@@ -614,7 +620,7 @@ const OnboardingPage: React.FC = () => {
 
           {/* Modal for Document Preview */}
           <Modal
-            visible={isModalVisible}
+            open={isModalVisible}
             footer={null}
             onCancel={() => {
               setIsModalVisible(false);

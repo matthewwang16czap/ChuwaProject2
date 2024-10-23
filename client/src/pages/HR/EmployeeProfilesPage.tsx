@@ -6,8 +6,8 @@ import {
   getAllEmployeesThunk,
   searchEmployeesByNameThunk,
   Employee,
-} from '../features/employee/employeeSlice';
-import { RootState, AppDispatch } from '../app/store';
+} from '../../features/employee/employeeSlice';
+import { RootState, AppDispatch } from '../../app/store';
 import { debounce } from 'lodash';
 import { Input, Table, Typography, Alert, Spin, Modal } from 'antd';
 import EmployeeProfilePage from './EmployeeProfilePage'; // Updated to accept props
