@@ -1,9 +1,15 @@
+// EmployeeProfilePage.tsx
+
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { Spin, Typography, Alert, Divider } from 'antd';
-import axiosInstance from '../api/axiosInstance'; 
-import axios from 'axios';
+import axiosInstance from '../../api/axiosInstance'; // Adjust the path as needed
+import moment from 'moment'; // Ensure moment is installed: npm install moment
+
 const { Title, Paragraph } = Typography;
+
+interface EmployeeProfilePageProps {
+  employeeId: string;
+}
 
 interface Employee {
   _id: string;
@@ -53,8 +59,7 @@ interface Employee {
   [key: string]: unknown;
 }
 
-const EmployeeProfilePage: React.FC = () => {
-  const { employeeId } = useParams<{ employeeId: string }>();
+const EmployeeProfilePage: React.FC<EmployeeProfilePageProps> = ({ employeeId }) => {
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +68,10 @@ const EmployeeProfilePage: React.FC = () => {
     const fetchEmployee = async () => {
       try {
         setLoading(true);
-        const response = await axiosInstance.get<{ message: string; employee: Employee }>(`/api/employee/${employeeId}`);
+        const response = await axiosInstance.get<{
+          message: string;
+          employee: Employee;
+        }>(`/api/employee/${employeeId}`);
         setEmployee(response.data.employee);
         setLoading(false);
       } catch (err: unknown) {
@@ -126,6 +134,12 @@ const EmployeeProfilePage: React.FC = () => {
     return `(${part1}) ${part2}-${part3}`;
   };
 
+  const formatDate = (dateString: string): string => {
+    if (!dateString) return 'N/A';
+    return moment(dateString).format('MMMM Do, YYYY');
+  };
+
+  // Display employee information (same as before)
   return (
     <div className="p-4">
       <Title level={3}>
