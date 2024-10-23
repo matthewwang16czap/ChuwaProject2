@@ -12,9 +12,9 @@ import {
   submitApplicationThunk,
   uploadFileThunk,
 } from '../features/application/applicationSlice';
+import { fetchDocument } from '../features/document/documentSlice';
 import { Alert, Spin, notification, Typography, Modal } from 'antd';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { useEffectOnce } from 'react-use'; // Optional, for cleanup
 
 // Set the PDF worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
@@ -27,15 +27,16 @@ const OnboardingPage: React.FC = () => {
 
   // State for document preview
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedDocumentUrl, setSelectedDocumentUrl] = useState('');
   const [fileType, setFileType] = useState('');
   const [numPages, setNumPages] = useState<number>(0);
+  const [documentName, setDocumentName] = useState(''); // To identify the document
 
   // Selectors to access Redux state
   const { application, status: appStatus, error: appError } = useSelector(
     (state: RootState) => state.application
   );
   const { user } = useSelector((state: RootState) => state.user);
+  const documentState = useSelector((state: RootState) => state.document); // Access document state
 
   // Initialize react-hook-form with default values from application data
   const methods = useForm<any>({
@@ -65,7 +66,6 @@ const OnboardingPage: React.FC = () => {
     // Update form with fetched application data
     if (application) {
       reset(application);
-      console.log('application.status:', application.status);
     }
   }, [application, reset]);
 
@@ -84,30 +84,43 @@ const OnboardingPage: React.FC = () => {
   // Clean up the object URL when the component unmounts
   useEffect(() => {
     return () => {
-      if (selectedDocumentUrl) {
-        URL.revokeObjectURL(selectedDocumentUrl);
+      if (documentState.document) {
+        URL.revokeObjectURL(URL.createObjectURL(documentState.document));
       }
     };
-  }, [selectedDocumentUrl]);
+  }, [documentState.document]);
 
-  const handleViewDocument = async (url: string) => {
+  // Updated handleViewDocument function
+  const handleViewDocument = async (url: string, documentName: string) => {
     try {
-      const token = localStorage.getItem('jwtToken'); // Adjust if you store the token elsewhere
-      const response = await fetch(`http://localhost:5000/${url}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Remove leading slash if present
+      if (url.startsWith('/')) {
+        url = url.substring(1);
+      }
+      // Split the URL into parts and remove empty strings
+      const urlParts = url.split('/').filter(Boolean);
+      // Assuming URL is in the format 'documents/{userId}/{filename}'
+      const userId = urlParts[1]; // 'documents' is at index 0
+      const filename = urlParts.slice(2).join('/'); // In case filename contains '/'
+      console.log('userId:', userId);
+      console.log('filename:', filename);
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch document');
+      // Dispatch fetchDocument thunk
+      await dispatch(fetchDocument({ userId, filename })).unwrap();
+
+      // Set fileType based on the filename extension
+      const extension = filename.split('.').pop()?.toLowerCase();
+      let fileType = '';
+      if (extension === 'pdf') {
+        fileType = 'application/pdf';
+      } else if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(extension || '')) {
+        fileType = 'image/' + extension;
+      } else {
+        fileType = 'unknown';
       }
 
-      const blob = await response.blob();
-      const fileType = blob.type;
-      const objectUrl = URL.createObjectURL(blob);
-      setSelectedDocumentUrl(objectUrl);
       setFileType(fileType);
+      setDocumentName(documentName);
       setIsModalVisible(true);
     } catch (error) {
       console.error('Error fetching document:', error);
@@ -121,6 +134,7 @@ const OnboardingPage: React.FC = () => {
   const onDocumentLoadSuccess = ({ numPages }: any) => {
     setNumPages(numPages);
   };
+
 
   const getFields = (): Field<any>[] => {
     const fields: Field<any>[] = [
@@ -561,7 +575,10 @@ const OnboardingPage: React.FC = () => {
                 Profile Picture:{' '}
                 <span
                   onClick={() =>
-                    handleViewDocument(application.documents.profilePictureUrl)
+                    handleViewDocument(
+                      application.documents.profilePictureUrl,
+                      'Profile Picture'
+                    )
                   }
                   className="text-blue-500 underline cursor-pointer"
                 >
@@ -574,7 +591,10 @@ const OnboardingPage: React.FC = () => {
                 Driver’s License:{' '}
                 <span
                   onClick={() =>
-                    handleViewDocument(application.documents.driverLicenseUrl)
+                    handleViewDocument(
+                      application.documents.driverLicenseUrl,
+                      'Driver’s License'
+                    )
                   }
                   className="text-blue-500 underline cursor-pointer"
                 >
@@ -588,7 +608,7 @@ const OnboardingPage: React.FC = () => {
                   <li key={index}>
                     {doc.name}:{' '}
                     <span
-                      onClick={() => handleViewDocument(doc.url)}
+                      onClick={() => handleViewDocument(doc.url, doc.name)}
                       className="text-blue-500 underline cursor-pointer"
                     >
                       View
@@ -600,40 +620,52 @@ const OnboardingPage: React.FC = () => {
 
           {/* Modal for Document Preview */}
           <Modal
-            visible={isModalVisible}
+            open={isModalVisible}
             footer={null}
             onCancel={() => {
               setIsModalVisible(false);
-              setSelectedDocumentUrl('');
               setFileType('');
             }}
             width={800}
           >
-            {fileType === 'application/pdf' && selectedDocumentUrl && (
-              <Document
-                file={selectedDocumentUrl}
-                onLoadSuccess={onDocumentLoadSuccess}
-                onLoadError={(error) => console.error('Error loading PDF:', error)}
-              >
-                {Array.from(new Array(numPages), (el, index) => (
-                  <Page
-                    key={`page_${index + 1}`}
-                    pageNumber={index + 1}
-                    width={750}
-                  />
-                ))}
-              </Document>
+            {documentState.status === 'loading' && (
+              <div className="flex justify-center items-center">
+                <Spin size="large" />
+              </div>
             )}
-            {fileType.startsWith('image/') && selectedDocumentUrl && (
-              <img
-                src={selectedDocumentUrl}
-                alt="Document Preview"
-                style={{ width: '100%' }}
+            {documentState.status === 'failed' && (
+              <Alert
+                message="Error"
+                description={documentState.error}
+                type="error"
+                showIcon
               />
             )}
-            {!fileType.startsWith('image/') && fileType !== 'application/pdf' && (
-              <p>Cannot preview this file type.</p>
-            )}
+            {documentState.status === 'succeeded' &&
+              documentState.document &&
+              (fileType === 'application/pdf' ? (
+                <Document
+                  file={URL.createObjectURL(documentState.document)}
+                  onLoadSuccess={onDocumentLoadSuccess}
+                  onLoadError={(error) => console.error('Error loading PDF:', error)}
+                >
+                  {Array.from(new Array(numPages), (el, index) => (
+                    <Page
+                      key={`page_${index + 1}`}
+                      pageNumber={index + 1}
+                      width={750}
+                    />
+                  ))}
+                </Document>
+              ) : fileType.startsWith('image/') ? (
+                <img
+                  src={URL.createObjectURL(documentState.document)}
+                  alt={documentName}
+                  style={{ width: '100%' }}
+                />
+              ) : (
+                <p>Cannot preview this file type.</p>
+              ))}
           </Modal>
         </div>
       );
