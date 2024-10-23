@@ -5,12 +5,47 @@ import axiosInstance from "../../api/axiosInstance";
 const API_URL = "/api/employee";
 
 // Types for employee state
-interface Employee {
-  _id: string;
+export interface Employee {
+  userId: string;
+  applicationId: string;
+  email: string;
   firstName: string;
   lastName: string;
+  middleName?: string;
   preferredName?: string;
-  [key: string]: unknown;
+  ssn: string;
+  dateOfBirth: Date | null;
+  gender: "Male" | "Female" | "Other";
+  citizenship?: "GreenCard" | "Citizen" | "WorkAuthorization";
+  address?: {
+    building: string;
+    street: string;
+    city: string;
+    state: string;
+    zip: string;
+  };
+  contactInfo?: {
+    cellPhone: string;
+    workPhone?: string;
+  };
+  employment?: {
+    visaType: string;
+    visaTitle: string;
+    startDate: Date;
+    endDate?: Date | null;
+  };
+  emergencyContact?: {
+    firstName: string;
+    lastName: string;
+    middleName?: string;
+    phone: string;
+    email: string;
+    relationship: string;
+  };
+  documents?: {
+    profilePictureUrl?: string;
+    driverLicenseUrl?: string;
+  };
 }
 
 interface EmployeeState {

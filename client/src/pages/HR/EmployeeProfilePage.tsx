@@ -4,10 +4,13 @@ import React, { useEffect, useState } from 'react';
 import { Spin, Typography, Alert, Divider } from 'antd';
 import axiosInstance from '../../api/axiosInstance'; // Adjust the path as needed
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
 // import moment from 'moment'; // Ensure moment is installed: npm install moment
 
 const { Title, Paragraph } = Typography;
+
+interface EmployeeProfilePageProps {
+  employeeId: string;
+}
 
 interface Employee {
   _id: string;
@@ -57,8 +60,7 @@ interface Employee {
   [key: string]: unknown;
 }
 
-const EmployeeProfilePage: React.FC = () => {
-  const { employeeId } = useParams<{ employeeId: string }>();
+const EmployeeProfilePage: React.FC<EmployeeProfilePageProps> = ({ employeeId }) => {
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);

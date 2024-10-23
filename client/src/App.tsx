@@ -19,6 +19,14 @@ import EmployeeProfilePage from './pages/HR/EmployeeProfilePage';
 import ReviewOnboardingApplication from './pages/HR/ReviewOnboardingApplication';
 import DocumentViewer from './pages/DocumentViewer';
 
+import { useParams } from 'react-router-dom';
+
+// UseParams directly inside the component you need
+const EmployeeProfileWithParams = () => {
+  const { employeeId } = useParams<{ employeeId: string }>();
+  return <EmployeeProfilePage employeeId={employeeId || ''} />;
+};
+
 function App() {
   return (
     <Provider store={store}>
@@ -134,7 +142,7 @@ function App() {
           element={
             <PrivateRoute>
               <MainLayout>
-                <EmployeeProfilePage/>
+                <EmployeeProfileWithParams/>
               </MainLayout>
             </PrivateRoute>
           }

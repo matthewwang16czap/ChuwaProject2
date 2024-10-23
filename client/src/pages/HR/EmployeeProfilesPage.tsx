@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   getAllEmployeesThunk,
   searchEmployeesByNameThunk,
-  Employee,
+  Employee
 } from '../../features/employee/employeeSlice';
 import { RootState, AppDispatch } from '../../app/store';
 import { debounce } from 'lodash';
