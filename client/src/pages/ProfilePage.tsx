@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 import { RootState } from "../app/store"; // Adjust the path as needed
-import PrototypeForm from "../forms/PrototypeForm"; // Adjust the path as needed
+import PrototypeForm, { Field } from "../forms/PrototypeForm"; // Adjust the path as needed
 
 interface UserProfile {
   email: string;
@@ -38,7 +38,7 @@ const ProfilePage: React.FC = () => {
     return <div>Loading...</div>;
   }
 
-  const fields = [
+  const fields: Field<UserProfile>[] = [
     {
       name: "email",
       label: "Email",
@@ -65,6 +65,7 @@ const ProfilePage: React.FC = () => {
       <h2 className="text-2xl font-bold mb-4 text-center">Profile</h2>
       <PrototypeForm
         fields={fields}
+        onSubmit={() => {}}
         methods={methods}
         showSubmitButton={false}
       />

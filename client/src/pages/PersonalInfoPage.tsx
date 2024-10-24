@@ -4,59 +4,17 @@ import PrototypeForm from '../forms/PrototypeForm';
 import { useForm, FormProvider } from 'react-hook-form';
 import { Modal } from 'antd'; // For confirmation dialog
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../app/store'; // Adjust the path as needed
+import { RootState, AppDispatch } from "../app/store"; 
 import {
   getMyProfileThunk,
   updateEmployeeThunk,
+  Employee
 } from '../features/employee/employeeSlice'; // Adjust the path as needed
-
-// Define the Employee interface based on your model
-interface IEmployee {
-  userId: string;
-  applicationId: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  middleName?: string;
-  preferredName?: string;
-  profilePictureUrl?: string;
-  ssn?: string;
-  dateOfBirth?: Date;
-  gender?: 'Male' | 'Female' | 'Other';
-  address?: {
-    building: string;
-    street: string;
-    city: string;
-    state: string;
-    zip: string;
-  };
-  contactInfo?: {
-    cellPhone: string;
-    workPhone?: string;
-  };
-  employment?: {
-    visaTitle: string;
-    startDate: Date;
-    endDate?: Date;
-  };
-  emergencyContact?: {
-    firstName: string;
-    lastName: string;
-    middleName?: string;
-    phone: string;
-    email: string;
-    relationship: string;
-  };
-  documents?: {
-    name: string;
-    url: string;
-  }[];
-}
+import axiosInstance from '../api/axiosInstance';
 
 const PersonalInfoPage: React.FC = () => {
-  const dispatch = useDispatch();
-  const employeeState = useSelector((state: RootState) => state.employee);
-  const employeeInfo = employeeState.employee as IEmployee | null;
+  const dispatch: AppDispatch = useDispatch();
+  const { employee } = useSelector((state: RootState) => state.employee);
   const [loading, setLoading] = useState<boolean>(true);
   const [editSections, setEditSections] = useState<{
     [key: string]: boolean;
@@ -67,9 +25,11 @@ const PersonalInfoPage: React.FC = () => {
     employment: false,
     emergencyContact: false,
   });
+  const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
+  const [documentBlob, setDocumentBlob] = useState<Blob | null>(null);
 
-  const methods = useForm<IEmployee>({
-    defaultValues: employeeInfo || {},
+  const methods = useForm<Employee>({
+    defaultValues: employee || {},
     mode: 'onChange',
   });
   const { reset, handleSubmit } = methods;
@@ -78,7 +38,7 @@ const PersonalInfoPage: React.FC = () => {
     // Fetch employee information using getMyProfileThunk
     const fetchEmployeeInfo = async () => {
       try {
-        await dispatch(getMyProfileThunk());
+        dispatch(getMyProfileThunk());
       } catch (error) {
         console.error('Error fetching employee info:', error);
       } finally {
@@ -92,11 +52,11 @@ const PersonalInfoPage: React.FC = () => {
 
   useEffect(() => {
     // Reset form when employeeInfo changes
-    if (employeeInfo) {
-      reset(employeeInfo);
+    if (employee) {
+      reset(employee);
     }
     
-  }, [employeeInfo, reset]);
+  }, [employee, reset]);
 
   const handleEditClick = (section: string) => {
     setEditSections((prev) => ({ ...prev, [section]: true }));
@@ -108,8 +68,8 @@ const PersonalInfoPage: React.FC = () => {
       content: 'Are you sure you want to discard all of your changes?',
       onOk() {
         // Reset the form to previous values
-        if (employeeInfo) {
-          reset(employeeInfo);
+        if (employee) {
+          reset(employee);
         }
         setEditSections((prev) => ({ ...prev, [section]: false }));
       },
@@ -128,7 +88,7 @@ const PersonalInfoPage: React.FC = () => {
             lastName: data.lastName,
             middleName: data.middleName,
             preferredName: data.preferredName,
-            profilePictureUrl: data.profilePictureUrl,
+            profilePictureUrl: data.documents?.profilePictureUrl,
             ssn: data.ssn,
             dateOfBirth: data.dateOfBirth,
             gender: data.gender,
@@ -168,7 +128,28 @@ const PersonalInfoPage: React.FC = () => {
     }
   };
 
-  if (loading || !employeeInfo) {
+  // Fetch document based on userId and filename
+  const fetchDocument = async (fileUrl: string) => {
+    try {
+      const response = await axiosInstance.get(`/${fileUrl}`, {
+        responseType: 'blob', // Expect binary data (Blob)
+      });
+      setDocumentBlob(response.data);
+      // Create a URL for the blob and set it for download or preview
+      // const url = URL.createObjectURL(response.data);
+      // window.open(url); // Open the document in a new tab
+    } catch (error) {
+      console.error('Error fetching document:', error);
+    }
+  };
+
+  const handleDocumentSelect = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>, file: string, fileUrl: string) => {
+    event.preventDefault(); 
+    setSelectedDocument(file);
+    fetchDocument(fileUrl); 
+  };
+
+  if (loading || !employee) {
     return <div>Loading...</div>;
   }
 
@@ -214,12 +195,6 @@ const PersonalInfoPage: React.FC = () => {
                 disabled: !editSections.name,
               },
               {
-                name: 'profilePictureUrl',
-                label: 'Profile Picture',
-                type: 'upload',
-                disabled: !editSections.name,
-              },
-              {
                 name: 'email',
                 label: 'Email',
                 type: 'input',
@@ -260,17 +235,6 @@ const PersonalInfoPage: React.FC = () => {
             methods={methods}
             showSubmitButton={false}
           />
-          {/* Display Profile Picture */}
-          {employeeInfo.profilePictureUrl && (
-            <div>
-              <h4>Profile Picture</h4>
-              <img
-                src={employeeInfo.profilePictureUrl}
-                alt="Profile"
-                style={{ width: '150px', height: '150px', borderRadius: '50%' }}
-              />
-            </div>
-          )}
         </Section>
 
         {/* Address Section */}
@@ -461,29 +425,31 @@ const PersonalInfoPage: React.FC = () => {
           />
         </Section>
 
-        {/* Documents Section */}
-        <div style={{ marginBottom: '20px' }}>
+        {/* Document Section */}
+        <div>
           <h3>Documents</h3>
-          <ul>
-          {Array.isArray(employeeInfo.documents) &&
-          employeeInfo.documents?.map((doc, index) => (
-              <li key={index}>
-                <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                  {doc.name}
-                </a>
-                <button
-                  style={{ marginLeft: '10px' }}
-                  onClick={() => window.open(doc.url, '_blank')}
-                >
-                  Preview
-                </button>
-                <a href={doc.url} download style={{ marginLeft: '10px' }}>
-                  Download
-                </a>
-              </li>
-            ))}
-          </ul>
+          {employee.documents && Object.entries(employee.documents).map(([key, val]) => (
+            <div key={key}>
+              <button onClick={(e) => handleDocumentSelect(e, key, val)}>
+                {key}
+              </button>
+            </div>
+          ))}
         </div>
+
+        {selectedDocument && (
+          <div>
+            <h4>Selected Document: {selectedDocument}</h4>
+            {documentBlob && (
+              <iframe
+                src={URL.createObjectURL(documentBlob)}
+                width="100%"
+                height="500px"
+                title="Document Preview"
+              />
+            )}
+          </div>
+        )}
       </div>
     </FormProvider>
   );

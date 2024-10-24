@@ -63,3 +63,22 @@ export const verifyEmployee = async (
     res.status(401).json({ message: "Permission Denied" });
   }
 };
+
+// Verify employee or HR
+export const verifyEmployeeOrHR = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  if (req?.user?.role === "HR") {
+    next();
+  } else if (
+    req?.user?.role === "Employee" &&
+    ((req?.params?.userId && req.user.userId === req.params.userId) ||
+      !req?.params?.userId)
+  ) {
+    next();
+  } else {
+    res.status(401).json({ message: "Permission Denied" });
+  }
+};
