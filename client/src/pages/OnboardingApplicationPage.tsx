@@ -11,13 +11,9 @@ import {
   updateApplicationThunk,
   submitApplicationThunk,
   uploadFileThunk,
+  Application
 } from '../features/application/applicationSlice';
-import { fetchDocument } from '../features/document/documentSlice';
 import { Alert, Spin, notification, Typography, Modal } from 'antd';
-import { Document, Page, pdfjs } from 'react-pdf';
-
-// Set the PDF worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 const { Title } = Typography;
 
@@ -27,19 +23,15 @@ const OnboardingPage: React.FC = () => {
 
   // State for document preview
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [fileType, setFileType] = useState('');
-  const [numPages, setNumPages] = useState<number>(0);
-  const [documentName, setDocumentName] = useState(''); // To identify the document
 
   // Selectors to access Redux state
   const { application, status: appStatus, error: appError } = useSelector(
     (state: RootState) => state.application
   );
   const { user } = useSelector((state: RootState) => state.user);
-  const documentState = useSelector((state: RootState) => state.document); // Access document state
 
   // Initialize react-hook-form with default values from application data
-  const methods = useForm<any>({
+  const methods = useForm<Application>({
     defaultValues: application || {},
     mode: 'onSubmit',
     reValidateMode: 'onSubmit',
@@ -49,7 +41,6 @@ const OnboardingPage: React.FC = () => {
     handleSubmit,
     watch,
     reset,
-    formState: { errors },
     setError,
   } = methods;
 
@@ -81,63 +72,8 @@ const OnboardingPage: React.FC = () => {
     }
   }, [application, navigate]);
 
-  // Clean up the object URL when the component unmounts
-  useEffect(() => {
-    return () => {
-      if (documentState.document) {
-        URL.revokeObjectURL(URL.createObjectURL(documentState.document));
-      }
-    };
-  }, [documentState.document]);
-
-  // Updated handleViewDocument function
-  const handleViewDocument = async (url: string, documentName: string) => {
-    try {
-      // Remove leading slash if present
-      if (url.startsWith('/')) {
-        url = url.substring(1);
-      }
-      // Split the URL into parts and remove empty strings
-      const urlParts = url.split('/').filter(Boolean);
-      // Assuming URL is in the format 'documents/{userId}/{filename}'
-      const userId = urlParts[1]; // 'documents' is at index 0
-      const filename = urlParts.slice(2).join('/'); // In case filename contains '/'
-      console.log('userId:', userId);
-      console.log('filename:', filename);
-
-      // Dispatch fetchDocument thunk
-      await dispatch(fetchDocument({ userId, filename })).unwrap();
-
-      // Set fileType based on the filename extension
-      const extension = filename.split('.').pop()?.toLowerCase();
-      let fileType = '';
-      if (extension === 'pdf') {
-        fileType = 'application/pdf';
-      } else if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(extension || '')) {
-        fileType = 'image/' + extension;
-      } else {
-        fileType = 'unknown';
-      }
-
-      setFileType(fileType);
-      setDocumentName(documentName);
-      setIsModalVisible(true);
-    } catch (error) {
-      console.error('Error fetching document:', error);
-      notification.error({
-        message: 'Error',
-        description: 'Failed to fetch document.',
-      });
-    }
-  };
-
-  const onDocumentLoadSuccess = ({ numPages }: any) => {
-    setNumPages(numPages);
-  };
-
-
-  const getFields = (): Field<any>[] => {
-    const fields: Field<any>[] = [
+  const getFields = (): Field<Application>[] => {
+    const fields: Field<Application>[] = [
       // Section: Personal Information
       {
         name: 'firstName',
@@ -165,8 +101,8 @@ const OnboardingPage: React.FC = () => {
         name: 'documents.profilePictureUrl',
         label: 'Profile Picture',
         type: 'upload',
-        placeholder: 'Upload your profile picture',
         validation: { required: 'Profile picture is required' },
+        filename: "ProfilePicture.pdf"
       },
       // Section: Address
       {

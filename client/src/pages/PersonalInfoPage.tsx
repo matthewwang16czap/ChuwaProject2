@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import PrototypeForm from '../forms/PrototypeForm';
 import { useForm, FormProvider } from 'react-hook-form';
-import { Modal } from 'antd'; // For confirmation dialog
+import { Modal, Button } from 'antd'; // For confirmation dialog
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from "../app/store"; 
 import {
@@ -143,7 +143,7 @@ const PersonalInfoPage: React.FC = () => {
     }
   };
 
-  const handleDocumentSelect = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>, file: string, fileUrl: string) => {
+  const handleDocumentSelect = (event: React.MouseEvent<HTMLElement, MouseEvent>, file: string, fileUrl: string) => {
     event.preventDefault(); 
     setSelectedDocument(file);
     fetchDocument(fileUrl); 
@@ -430,9 +430,9 @@ const PersonalInfoPage: React.FC = () => {
           <h3>Documents</h3>
           {employee.documents && Object.entries(employee.documents).map(([key, val]) => (
             <div key={key}>
-              <button onClick={(e) => handleDocumentSelect(e, key, val)}>
+              <Button onClick={(e) => handleDocumentSelect(e, key, val)}>
                 {key}
-              </button>
+              </Button>
             </div>
           ))}
         </div>
@@ -476,11 +476,11 @@ const Section: React.FC<SectionProps> = ({
     <div style={{ marginBottom: '20px' }}>
       <h3>{title}</h3>
       {!isEditing ? (
-        <button onClick={onEdit}>Edit</button>
+        <Button onClick={onEdit}>Edit</Button>
       ) : (
         <div>
-          <button onClick={onCancel}>Cancel</button>
-          <button onClick={onSave}>Save</button>
+          <Button onClick={onCancel}>Cancel</Button>
+          <Button onClick={onSave}>Save</Button>
         </div>
       )}
       {children}
