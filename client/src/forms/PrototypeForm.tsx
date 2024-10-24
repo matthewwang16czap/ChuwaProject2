@@ -16,6 +16,7 @@ export interface Field<T extends FieldValues> {
   options?: { label: string; value: string }[];
   validation?: Record<string, unknown>;
   disabled?: boolean;
+  filename?: string;
 }
 
 // Define the PrototypeFormProps interface
@@ -53,12 +54,18 @@ const PrototypeForm = <T extends FieldValues>({
     >
       {fields.map((field) => {
         const error = get(errors, field.name); // Use get to access nested errors
+        const isRequired = field.validation?.required ? true : false; // Check if the field is required
+
         switch (field.type) {
           case "input":
             return (
               <Form.Item
                 key={field.name}
-                label={field.label}
+                label={
+                  <>
+                    {field.label} {isRequired && <span style={{ color: 'red' }}>*</span>}
+                  </>
+                }
                 validateStatus={error ? "error" : ""}
                 help={error?.message?.toString()}
               >
@@ -79,12 +86,17 @@ const PrototypeForm = <T extends FieldValues>({
                 />
               </Form.Item>
             );
-          // ... other field types ...
+          // Other cases...
+
           case "upload":
             return (
               <Form.Item
                 key={field.name}
-                label={field.label}
+                label={
+                  <>
+                    {field.label} {isRequired && <span style={{ color: 'red' }}>*</span>}
+                  </>
+                }
                 validateStatus={error ? 'error' : ''}
                 help={error?.message?.toString()}
               >
@@ -104,18 +116,22 @@ const PrototypeForm = <T extends FieldValues>({
                         ]
                       : [];
                     return (
-                      <Upload
-                        fileList={fileList}
-                        disabled={field.disabled}
-                        beforeUpload={(file) => {
-                          onChange(file); // Update form state
-                          dispatch(uploadFileThunk({ file })); // Dispatch the thunk
-                          return false; // Prevent default upload behavior
-                        }}
-                        onRemove={() => onChange(null)}
-                      >
-                        <Button icon={<UploadOutlined />}>Click to Upload</Button>
-                      </Upload>
+                      <>
+                        <Upload
+                          fileList={fileList}
+                          disabled={field.disabled}
+                          beforeUpload={(file) => {
+                            const newFile = new File([file], field.filename || file.name, { type: file.type });
+                            console.log(newFile);
+                            onChange({ ...newFile, name: newFile.name }); // Update form state with file
+                            dispatch(uploadFileThunk({ file: newFile })); // Dispatch the thunk
+                            return false; // Prevent default upload behavior
+                          }}
+                          onRemove={() => onChange(null)}
+                        >
+                          <Button icon={<UploadOutlined />}>Click to Upload</Button>
+                        </Upload>
+                      </>
                     );
                   }}
                 />
