@@ -1,15 +1,13 @@
 // src/App.tsx
-
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import HomePage from './pages/DefaultPage';
-import OnboardingPage from './pages/OnboardingApplicationPage';
+import OnboardingApplicationPage from './pages/OnboardingApplicationPage';
 import PersonalInfoPage from './pages/PersonalInfoPage';
 import Logout from './components/Logout';
 import LoginPage from './pages/LoginPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
-import SendInvitationPage from './pages/HR/HiringManagementPage';
+import HiringManagementPage from './pages/HR/HiringManagementPage';
 import RegisterPage from './pages/RegisterPage';
 import ChangePassword from './pages/ChangePassword';
 import ProfilePage from './pages/ProfilePage'
@@ -20,6 +18,14 @@ import EmployeeProfilesPage from './pages/HR/EmployeeProfilesPage';
 import EmployeeProfilePage from './pages/HR/EmployeeProfilePage';
 import ReviewOnboardingApplication from './pages/HR/ReviewOnboardingApplication';
 import DocumentViewer from './pages/DocumentViewer';
+
+import { useParams } from 'react-router-dom';
+
+// UseParams directly inside the component you need
+const EmployeeProfileWithParams = () => {
+  const { employeeId } = useParams<{ employeeId: string }>();
+  return <EmployeeProfilePage employeeId={employeeId || ''} />;
+};
 
 function App() {
   return (
@@ -83,7 +89,7 @@ function App() {
           element={
             <PrivateRoute roles={['Employee']}>
               <MainLayout>
-                <OnboardingPage />
+                <OnboardingApplicationPage />
               </MainLayout>
             </PrivateRoute>
           }
@@ -116,7 +122,7 @@ function App() {
           element={
             <PrivateRoute roles={['HR']}>
               <MainLayout>
-                <SendInvitationPage />
+                <HiringManagementPage />
               </MainLayout>
             </PrivateRoute>
           }
@@ -136,7 +142,7 @@ function App() {
           element={
             <PrivateRoute>
               <MainLayout>
-                <EmployeeProfilePage/>
+                <EmployeeProfileWithParams/>
               </MainLayout>
             </PrivateRoute>
           }

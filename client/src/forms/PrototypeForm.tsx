@@ -1,9 +1,9 @@
 import { Controller, UseFormReturn, FieldValues, Path } from "react-hook-form";
-import { Form, Input, Select, Radio, DatePicker, Upload, Button } from "antd";
+import { Form, Input, Upload, Button } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { UploadFile, UploadFileStatus } from "antd/lib/upload/interface";
-import dayjs from "dayjs";
 import { useDispatch } from 'react-redux'; // Import useDispatch
+import { AppDispatch } from '../app/store';
 import { uploadFileThunk } from '../features/application/applicationSlice'; // Adjust import as needed
 import { get } from 'lodash';
 
@@ -22,7 +22,7 @@ export interface Field<T extends FieldValues> {
 interface PrototypeFormProps<T extends FieldValues> {
   fields: Field<T>[];
   onSubmit: (data: T) => void;
-  onError?: (errors: any) => void; // Add onError prop
+  onError?: (errors: unknown) => void; // Add onError prop
   methods: UseFormReturn<T>;
   submitButtonLabel?: string;
   showSubmitButton?: boolean;
@@ -43,7 +43,7 @@ const PrototypeForm = <T extends FieldValues>({
     formState: { errors },
   } = methods;
 
-  const dispatch = useDispatch(); // Initialize dispatch
+  const dispatch = useDispatch<AppDispatch>(); // Initialize dispatch
 
   return (
     <Form

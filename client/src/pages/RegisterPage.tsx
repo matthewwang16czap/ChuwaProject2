@@ -1,13 +1,14 @@
-// src/pages/RegisterPage.tsx
-
-import React, { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import {jwtDecode} from 'jwt-decode';
-import { useForm } from 'react-hook-form';
-import { useDispatch, useSelector } from 'react-redux';
-import { register } from '../features/registration/registrationSlice'; // Adjust the path as needed
-import { RootState } from '../app/store'; // Adjust the path as needed
-import PrototypeForm from '../forms/PrototypeForm';
+import React, { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { jwtDecode } from "jwt-decode";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  register,
+  resetStatus,
+} from "../features/registration/registrationSlice"; // Adjust path as needed
+import { RootState, AppDispatch } from "../app/store"; // Adjust path as needed
+import PrototypeForm, { Field } from "../forms/PrototypeForm";
 
 interface JwtPayload {
   user: {
@@ -15,124 +16,163 @@ interface JwtPayload {
   };
 }
 
+interface RegisterFormInputs {
+  email: string;
+  username: string;
+  password: string;
+  confirmPassword: string;
+}
+
 const RegisterPage: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const { registrationStatus, error } = useSelector((state: RootState) => state.registration);
+  const { registerStatus, error } = useSelector(
+    (state: RootState) => state.registration
+  );
 
-  const [token, setToken] = React.useState<string | null>(null);
-  const [email, setEmail] = React.useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
 
-  // Extract token from URL query parameters
+  const methods = useForm<RegisterFormInputs>({
+    defaultValues: {
+      email: "",
+      username: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
+
+  // Extract token from URL and decode email
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const tokenParam = params.get('token');
+    const tokenParam = params.get("token");
 
     if (tokenParam) {
       setToken(tokenParam);
       try {
-        // Decode the token to extract the email
         const decoded = jwtDecode<JwtPayload>(tokenParam);
         const userEmail = decoded?.user?.email;
         if (userEmail) {
           setEmail(userEmail);
+          methods.setValue("email", userEmail);
         } else {
-          methods.setError('email', { type: 'manual', message: 'Invalid token: email not found.' });
+          methods.setError("email", {
+            type: "manual",
+            message: "Invalid token: email not found.",
+          });
         }
-      } catch (err) {
-        console.error('Error decoding token:', err);
-        methods.setError('email', { type: 'manual', message: 'Invalid token.' });
+      } catch {
+        methods.setError("email", {
+          type: "manual",
+          message: "Invalid token.",
+        });
       }
     } else {
-      methods.setError('email', { type: 'manual', message: 'Invalid or missing token.' });
+      methods.setError("email", {
+        type: "manual",
+        message: "Invalid or missing token.",
+      });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.search]);
+  }, [location.search, methods]);
 
-  const methods = useForm({
-    defaultValues: {
-      email: email || '',
-    },
-  });
-
-  // Update default values when email changes
+  // Redirect to login page after successful registration
   useEffect(() => {
-    methods.reset({
-      email: email || '',
-    });
-  }, [email, methods]);
+    if (registerStatus === "succeeded") {
+      setTimeout(() => {
+        navigate("/login");
+        dispatch(resetStatus()); // Clear status after redirection
+      }, 3000);
+    }
+  }, [registerStatus, navigate, dispatch]);
 
-  const loading = registrationStatus === 'loading';
-
-  const onSubmit = (data: any) => {
+  const onSubmit: SubmitHandler<RegisterFormInputs> = (data) => {
     if (data.password !== data.confirmPassword) {
-      methods.setError('confirmPassword', { type: 'manual', message: 'Passwords do not match.' });
+      methods.setError("confirmPassword", {
+        type: "manual",
+        message: "Passwords do not match.",
+      });
       return;
     }
 
-    dispatch(
-      register({
-        email: email!,
-        username: data.username,
-        password: data.password,
-        token: token!,
-      })
-    );
+    if (token && email) {
+      dispatch(
+        register({
+          email,
+          username: data.username,
+          password: data.password,
+          token,
+        })
+      );
+    }
   };
 
-  useEffect(() => {
-    if (registrationStatus === 'succeeded') {
-      // Redirect to login page after a short delay
-      setTimeout(() => {
-        navigate('/login');
-      }, 3000);
-    }
-  }, [registrationStatus, navigate]);
-
-  // Define form fields
-  const fields = [
+  // Form Fields Definition
+  const fields: Field<RegisterFormInputs>[] = [
     {
-      name: 'email',
-      label: 'Email Address',
-      type: 'input',
+      name: "email",
+      label: "Email Address",
+      type: "input",
       disabled: true,
-      validation: { required: 'Email is required' },
+      validation: { required: "Email is required" },
     },
     {
-      name: 'username',
-      label: 'Username',
-      type: 'input',
-      validation: { required: 'Username is required' },
+      name: "username",
+      label: "Username",
+      type: "input",
+      validation: {
+        required: "Username is required",
+        pattern: {
+          value: /^[a-zA-Z0-9]{4,}$/,
+          message:
+            "Username must be at least 4 characters long and contain only letters and numbers.",
+        },
+      },
     },
     {
-      name: 'password',
-      label: 'Password',
-      type: 'input',
-      inputType: 'password',
-      validation: { required: 'Password is required' },
+      name: "password",
+      label: "Password",
+      type: "input",
+      inputType: "password",
+      validation: {
+        required: "Password is required",
+        pattern: {
+          value: /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+          message:
+            "Password must be at least 8 characters long, contain at least one letter, one number, and one special character.",
+        },
+      },
     },
     {
-      name: 'confirmPassword',
-      label: 'Confirm Password',
-      type: 'input',
-      inputType: 'password',
-      validation: { required: 'Confirm your password' },
+      name: "confirmPassword",
+      label: "Confirm Password",
+      type: "input",
+      inputType: "password",
+      validation: {
+        required: "Confirm your password",
+        pattern: {
+          value: /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+          message:
+            "Password must be at least 8 characters long, contain at least one letter, one number, and one special character.",
+        },
+      },
     },
   ];
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 border rounded shadow">
-      <h2 className="text-2xl font-bold mb-4 text-center">Employee Registration</h2>
+      <h2 className="text-2xl font-bold mb-4 text-center">
+        Employee Registration
+      </h2>
       {email && <p className="text-center mb-4">Hello, {email}</p>}
-      {registrationStatus === 'succeeded' && (
+      {registerStatus === "succeeded" && (
         <div className="mb-4 text-green-600 text-center">
           Registration successful! Redirecting to login page...
         </div>
       )}
-      {registrationStatus === 'failed' && error && (
+      {registerStatus === "failed" && error && (
         <div className="mb-4 text-red-600 text-center">
-          {typeof error === 'string' ? error : JSON.stringify(error)}
+          {typeof error === "string" ? error : JSON.stringify(error)}
         </div>
       )}
       {token && email ? (
@@ -140,10 +180,14 @@ const RegisterPage: React.FC = () => {
           fields={fields}
           onSubmit={onSubmit}
           methods={methods}
-          submitButtonLabel={loading ? 'Registering...' : 'Register'}
+          submitButtonLabel={
+            registerStatus === "loading" ? "Registering..." : "Register"
+          }
         />
       ) : (
-        <div className="text-center text-red-600">Invalid or missing token.</div>
+        <div className="text-center text-red-600">
+          Invalid or missing token.
+        </div>
       )}
     </div>
   );

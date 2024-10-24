@@ -4,6 +4,68 @@ import axiosInstance from "../../api/axiosInstance";
 
 const API_URL = "/api/application";
 
+interface IDocument {
+  name: string;
+  url: string | null;
+  status: "NeverSubmitted" | "Pending" | "Approved" | "Rejected";
+  feedback?: string;
+}
+
+interface IWorkAuthorization {
+  visaType: "H1-B" | "L2" | "F1(CPT/OPT)" | "H4" | "Other";
+  visaTitle?: string;
+  startDate: Date;
+  endDate?: Date;
+  documents?: IDocument[];
+}
+
+export interface Application {
+  employeeId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  preferredName?: string;
+  address?: {
+    building: string;
+    street: string;
+    city: string;
+    state: string;
+    zip: string;
+  };
+  contactInfo?: {
+    cellPhone: string;
+    workPhone?: string;
+  };
+  ssn?: string;
+  dateOfBirth?: Date;
+  gender?: "Male" | "Female" | "Other";
+  citizenship?: "GreenCard" | "Citizen" | "WorkAuthorization";
+  workAuthorization?: IWorkAuthorization;
+  references?: {
+    firstName: string;
+    lastName: string;
+    middleName?: string;
+    phone: string;
+    email: string;
+    relationship: string;
+  };
+  emergencyContact?: {
+    firstName: string;
+    lastName: string;
+    middleName?: string;
+    phone: string;
+    email: string;
+    relationship: string;
+  };
+  documents?: {
+    profilePictureUrl?: string;
+    driverLicenseUrl?: string;
+  };
+  status: "NeverSubmitted" | "Pending" | "Approved" | "Rejected";
+  feedback?: string;
+}
+
 interface UploadFilePayload {
   file: File;
 }
@@ -19,12 +81,12 @@ interface UpdateApplicationPayload {
 
 interface UpdateApplicationResponse {
   message: string;
-  updatedApplication: Record<string, unknown>;
+  updatedApplication: Application;
 }
 
 interface SubmitApplicationResponse {
   message: string;
-  application: Record<string, unknown>;
+  application: Application;
 }
 
 interface DecideApplicationPayload {
@@ -35,7 +97,7 @@ interface DecideApplicationPayload {
 
 interface DecideApplicationResponse {
   message: string;
-  application: Record<string, unknown>;
+  application: Application;
 }
 
 interface DecideDocumentPayload {
@@ -47,12 +109,12 @@ interface DecideDocumentPayload {
 
 interface DecideDocumentResponse {
   message: string;
-  application: Record<string, unknown>;
+  application: Application;
 }
 
 interface ApplicationState {
   message: string | null;
-  application: Record<string, unknown> | null;
+  application: Application | null;
   status: "loading" | "succeeded" | "failed" | null;
   action:
     | "uploadFile"
@@ -100,7 +162,7 @@ export const uploadFileThunk = createAsyncThunk<
 });
 
 export const getMyApplicationThunk = createAsyncThunk<
-  { application: any }, // Adjust the type as needed
+  { application: Application }, 
   void,
   { rejectValue: string }
 >(
