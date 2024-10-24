@@ -20,7 +20,7 @@ interface RegistrationHistoryPayload {
   registrationId?: string;
   email?: string;
 }
-interface RegistrationHistoryDocument {
+export interface RegistrationHistoryDocument {
   token: string;
   createdAt: string;
   expireAt: string;
@@ -31,7 +31,7 @@ interface RegistrationHistoryResponse {
   registrationHistory: RegistrationHistoryDocument[];
 }
 
-interface Registration {
+export interface Registration {
   email: string;
   registrationHistory: RegistrationHistoryDocument[];
   userId: string;
