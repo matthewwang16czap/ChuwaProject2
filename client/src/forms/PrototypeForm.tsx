@@ -2,10 +2,11 @@ import { Controller, UseFormReturn, FieldValues, Path } from "react-hook-form";
 import { Form, Input, Upload, Button } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { UploadFile, UploadFileStatus } from "antd/lib/upload/interface";
-import { useDispatch } from 'react-redux'; // Import useDispatch
-import { AppDispatch } from '../app/store';
-import { uploadFileThunk } from '../features/application/applicationSlice'; // Adjust import as needed
-import { get } from 'lodash';
+import { useDispatch } from "react-redux"; // Import useDispatch
+import { AppDispatch } from "../app/store";
+import { uploadFileThunk } from "../features/application/applicationSlice"; // Adjust import as needed
+import { get } from "lodash";
+import axiosInstance from "../api/axiosInstance";
 
 // Define the Field interface
 export interface Field<T extends FieldValues> {
@@ -63,7 +64,8 @@ const PrototypeForm = <T extends FieldValues>({
                 key={field.name}
                 label={
                   <>
-                    {field.label} {isRequired && <span style={{ color: 'red' }}>*</span>}
+                    {field.label}{" "}
+                    {isRequired && <span style={{ color: "red" }}>*</span>}
                   </>
                 }
                 validateStatus={error ? "error" : ""}
@@ -94,10 +96,11 @@ const PrototypeForm = <T extends FieldValues>({
                 key={field.name}
                 label={
                   <>
-                    {field.label} {isRequired && <span style={{ color: 'red' }}>*</span>}
+                    {field.label}{" "}
+                    {isRequired && <span style={{ color: "red" }}>*</span>}
                   </>
                 }
-                validateStatus={error ? 'error' : ''}
+                validateStatus={error ? "error" : ""}
                 help={error?.message?.toString()}
               >
                 <Controller
@@ -108,28 +111,68 @@ const PrototypeForm = <T extends FieldValues>({
                     const fileList: UploadFile[] = value
                       ? [
                           {
-                            uid: '-1',
-                            name: value.name || 'Uploaded File',
-                            status: 'done' as UploadFileStatus,
-                            url: value.url || '',
+                            uid: "-1",
+                            name: "Uploaded File", // You can adjust this to display any name you want
+                            status: "done" as UploadFileStatus,
+                            url: value, // Assuming `value` is the URL returned from the backend
                           },
                         ]
                       : [];
+
+                    const handleBeforeUpload = (file: File) => {
+                      const newFile = new File(
+                        [file],
+                        field.filename || file.name,
+                        {
+                          type: file.type,
+                        }
+                      );
+
+                      // This assumes your backend returns only the URL; you can handle the dispatch separately
+                      dispatch(uploadFileThunk({ file: newFile }))
+                        .unwrap()
+                        .then((response) => {
+                          // Assume the response contains the URL from the backend
+                          const fileUrl = response.filePath;
+                          onChange(fileUrl); // Update form state with the URL
+                        });
+
+                      return false; // Prevent default upload behavior
+                    };
+
+                    const handleFileClick = async (fileUrl: string) => {
+                      try {
+                        const response = await axiosInstance.get(`/${fileUrl}`, {
+                          responseType: 'blob', // or display pdf directly depending on the type
+                        });
+                
+                        // Handle file response (e.g., download the file or open it)
+                        const blob = new Blob([response.data], { type: response.headers['content-type'] });
+                        const downloadUrl = URL.createObjectURL(blob);
+                        window.open(downloadUrl); // Opens the file in a new tab
+                
+                        // Optionally, handle the file to be downloaded directly:
+                        // const link = document.createElement('a');
+                        // link.href = downloadUrl;
+                        // link.download = file.name;
+                        // link.click();
+                      } catch (error) {
+                        console.error('Error downloading the file:', error);
+                      }
+                    };
+
                     return (
                       <>
                         <Upload
                           fileList={fileList}
                           disabled={field.disabled}
-                          beforeUpload={(file) => {
-                            const newFile = new File([file], field.filename || file.name, { type: file.type });
-                            console.log(newFile);
-                            onChange({ ...newFile, name: newFile.name }); // Update form state with file
-                            dispatch(uploadFileThunk({ file: newFile })); // Dispatch the thunk
-                            return false; // Prevent default upload behavior
-                          }}
-                          onRemove={() => onChange(null)}
+                          beforeUpload={handleBeforeUpload}
+                          onRemove={() => onChange(null)} // Clear the state when the file is removed
+                          onPreview={(file) => handleFileClick(file.url || "")}
                         >
-                          <Button icon={<UploadOutlined />}>Click to Upload</Button>
+                          <Button icon={<UploadOutlined />}>
+                            Click to Upload
+                          </Button>
                         </Upload>
                       </>
                     );

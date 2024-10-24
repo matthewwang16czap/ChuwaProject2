@@ -1,19 +1,19 @@
 // OnboardingPage.tsx
 
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import PrototypeForm, { Field } from '../forms/PrototypeForm';
-import { useForm } from 'react-hook-form';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState, AppDispatch } from '../app/store';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import PrototypeForm, { Field } from "../forms/PrototypeForm";
+import { useForm } from "react-hook-form";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "../app/store";
 import {
   getMyApplicationThunk,
   updateApplicationThunk,
   submitApplicationThunk,
   uploadFileThunk,
-  Application
-} from '../features/application/applicationSlice';
-import { Alert, Spin, notification, Typography, Modal } from 'antd';
+  Application,
+} from "../features/application/applicationSlice";
+import { Alert, Spin, notification, Typography, Modal } from "antd";
 
 const { Title } = Typography;
 
@@ -25,28 +25,24 @@ const OnboardingPage: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   // Selectors to access Redux state
-  const { application, status: appStatus, error: appError } = useSelector(
-    (state: RootState) => state.application
-  );
-  const { user } = useSelector((state: RootState) => state.user);
+  const {
+    application,
+    status: appStatus,
+    error: appError,
+  } = useSelector((state: RootState) => state.application);
 
   // Initialize react-hook-form with default values from application data
   const methods = useForm<Application>({
     defaultValues: application || {},
-    mode: 'onSubmit',
-    reValidateMode: 'onSubmit',
+    mode: "onSubmit",
+    reValidateMode: "onSubmit",
   });
 
-  const {
-    handleSubmit,
-    watch,
-    reset,
-    setError,
-  } = methods;
+  const { handleSubmit, watch, reset, setError } = methods;
 
   // Watch for dynamic fields
-  const citizenship = watch('citizenship');
-  const visaType = watch('workAuthorization.visaType');
+  const citizenship = watch("citizenship");
+  const visaType = watch("workAuthorization.visaType");
 
   useEffect(() => {
     // Fetch application data when component mounts
@@ -62,13 +58,13 @@ const OnboardingPage: React.FC = () => {
 
   useEffect(() => {
     // Redirect to home if application is approved
-    if (application && application.status === 'Approved') {
+    if (application && application.status === "Approved") {
       notification.success({
-        message: 'Application Approved',
+        message: "Application Approved",
         description:
-          'Your onboarding application has been approved. Welcome aboard!',
+          "Your onboarding application has been approved. Welcome aboard!",
       });
-      navigate('/home');
+      navigate("/home");
     }
   }, [application, navigate]);
 
@@ -76,183 +72,182 @@ const OnboardingPage: React.FC = () => {
     const fields: Field<Application>[] = [
       // Section: Personal Information
       {
-        name: 'firstName',
-        label: 'First Name',
-        type: 'input',
-        validation: { required: 'First name is required' },
+        name: "firstName",
+        label: "First Name",
+        type: "input",
+        validation: { required: "First name is required" },
       },
       {
-        name: 'lastName',
-        label: 'Last Name',
-        type: 'input',
-        validation: { required: 'Last name is required' },
+        name: "lastName",
+        label: "Last Name",
+        type: "input",
+        validation: { required: "Last name is required" },
       },
       {
-        name: 'middleName',
-        label: 'Middle Name',
-        type: 'input',
+        name: "middleName",
+        label: "Middle Name",
+        type: "input",
       },
       {
-        name: 'preferredName',
-        label: 'Preferred Name',
-        type: 'input',
+        name: "preferredName",
+        label: "Preferred Name",
+        type: "input",
       },
       {
-        name: 'documents.profilePictureUrl',
-        label: 'Profile Picture',
-        type: 'upload',
-        validation: { required: 'Profile picture is required' },
-        filename: "ProfilePicture.pdf"
+        name: "documents.profilePictureUrl",
+        label: "Profile Picture",
+        type: "upload",
+        validation: { required: "Profile picture is required" },
+        filename: "ProfilePicture.pdf",
       },
       // Section: Address
       {
-        name: 'address.building',
-        label: 'Building/Apt #',
-        type: 'input',
-        validation: { required: 'Building/Apt # is required' },
+        name: "address.building",
+        label: "Building/Apt #",
+        type: "input",
+        validation: { required: "Building/Apt # is required" },
       },
       {
-        name: 'address.street',
-        label: 'Street Name',
-        type: 'input',
-        validation: { required: 'Street name is required' },
+        name: "address.street",
+        label: "Street Name",
+        type: "input",
+        validation: { required: "Street name is required" },
       },
       {
-        name: 'address.city',
-        label: 'City',
-        type: 'input',
-        validation: { required: 'City is required' },
+        name: "address.city",
+        label: "City",
+        type: "input",
+        validation: { required: "City is required" },
       },
       {
-        name: 'address.state',
-        label: 'State',
-        type: 'input',
-        validation: { required: 'State is required' },
+        name: "address.state",
+        label: "State",
+        type: "input",
+        validation: { required: "State is required" },
       },
       {
-        name: 'address.zip',
-        label: 'Zip Code',
-        type: 'input',
-        validation: { required: 'Zip code is required' },
+        name: "address.zip",
+        label: "Zip Code",
+        type: "input",
+        validation: { required: "Zip code is required" },
       },
       // Section: Contact Information
       {
-        name: 'contactInfo.cellPhone',
-        label: 'Cell Phone Number',
-        type: 'input',
+        name: "contactInfo.cellPhone",
+        label: "Cell Phone Number",
+        type: "input",
         validation: {
-          required: 'Cell phone number is required',
+          required: "Cell phone number is required",
           pattern: {
             value: /^(\+?\d{1,3}[- ]?)?\d{10}$/,
-            message: 'Invalid phone number',
+            message: "Invalid phone number",
           },
         },
       },
       {
-        name: 'contactInfo.workPhone',
-        label: 'Work Phone Number',
-        type: 'input',
+        name: "contactInfo.workPhone",
+        label: "Work Phone Number",
+        type: "input",
         validation: {
           pattern: {
             value: /^(\+?\d{1,3}[- ]?)?\d{10}$/,
-            message: 'Invalid phone number',
+            message: "Invalid phone number",
           },
         },
       },
       {
-        name: 'email',
-        label: 'Email',
-        type: 'input',
+        name: "email",
+        label: "Email",
+        type: "input",
         disabled: true, // Email cannot be edited
-        defaultValue: user?.email,
       },
       // Section: Additional Information
       {
-        name: 'ssn',
-        label: 'SSN',
-        type: 'input',
+        name: "ssn",
+        label: "SSN",
+        type: "input",
         validation: {
-          required: 'SSN is required',
+          required: "SSN is required",
           pattern: {
             value: /^\d{9}$/,
-            message: 'SSN must be 9 digits',
+            message: "SSN must be 9 digits",
           },
         },
       },
       {
-        name: 'dateOfBirth',
-        label: 'Date of Birth',
-        type: 'date',
-        validation: { required: 'Date of birth is required' },
+        name: "dateOfBirth",
+        label: "Date of Birth",
+        type: "date",
+        validation: { required: "Date of birth is required" },
       },
       {
-        name: 'gender',
-        label: 'Gender',
-        type: 'radio',
+        name: "gender",
+        label: "Gender",
+        type: "radio",
         options: [
-          { label: 'Male', value: 'Male' },
-          { label: 'Female', value: 'Female' },
-          { label: 'Other', value: 'Other' },
+          { label: "Male", value: "Male" },
+          { label: "Female", value: "Female" },
+          { label: "Other", value: "Other" },
         ],
-        validation: { required: 'Gender is required' },
+        validation: { required: "Gender is required" },
       },
       // Section: Citizenship
       {
-        name: 'citizenship',
-        label: 'Citizenship Status',
-        type: 'radio',
+        name: "citizenship",
+        label: "Citizenship Status",
+        type: "radio",
         options: [
-          { label: 'Green Card', value: 'GreenCard' },
-          { label: 'Citizen', value: 'Citizen' },
-          { label: 'Work Authorization', value: 'WorkAuthorization' },
+          { label: "Green Card", value: "GreenCard" },
+          { label: "Citizen", value: "Citizen" },
+          { label: "Work Authorization", value: "WorkAuthorization" },
         ],
-        validation: { required: 'Citizenship status is required' },
+        validation: { required: "Citizenship status is required" },
       },
     ];
 
     // Conditional Fields for Citizenship
-    if (citizenship === 'WorkAuthorization') {
+    if (citizenship === "WorkAuthorization") {
       fields.push(
         {
-          name: 'workAuthorization.visaType',
-          label: 'What is your work authorization?',
-          type: 'select',
+          name: "workAuthorization.visaType",
+          label: "What is your work authorization?",
+          type: "select",
           options: [
-            { label: 'H1-B', value: 'H1-B' },
-            { label: 'L2', value: 'L2' },
-            { label: 'F1(CPT/OPT)', value: 'F1(CPT/OPT)' },
-            { label: 'H4', value: 'H4' },
-            { label: 'Other', value: 'Other' },
+            { label: "H1-B", value: "H1-B" },
+            { label: "L2", value: "L2" },
+            { label: "F1(CPT/OPT)", value: "F1(CPT/OPT)" },
+            { label: "H4", value: "H4" },
+            { label: "Other", value: "Other" },
           ],
-          validation: { required: 'Work authorization is required' },
+          validation: { required: "Work authorization is required" },
         },
         {
-          name: 'workAuthorization.startDate',
-          label: 'Start Date',
-          type: 'date',
-          validation: { required: 'Start date is required' },
+          name: "workAuthorization.startDate",
+          label: "Start Date",
+          type: "date",
+          validation: { required: "Start date is required" },
         },
         {
-          name: 'workAuthorization.endDate',
-          label: 'End Date',
-          type: 'date',
-          validation: { required: 'End date is required' },
+          name: "workAuthorization.endDate",
+          label: "End Date",
+          type: "date",
+          validation: { required: "End date is required" },
         }
       );
 
-      if (visaType === 'F1(CPT/OPT)') {
+      if (visaType === "F1(CPT/OPT)") {
         fields.push({
-          name: 'workAuthorization.documents',
-          label: 'Upload OPT Receipt',
-          type: 'upload',
-          validation: { required: 'OPT Receipt is required' },
+          name: "workAuthorization.documents",
+          label: "Upload OPT Receipt",
+          type: "upload",
+          validation: { required: "OPT Receipt is required" },
         });
-      } else if (visaType === 'Other') {
+      } else if (visaType === "Other") {
         fields.push({
-          name: 'workAuthorization.visaTitle',
-          label: 'Specify the visa title',
-          type: 'input',
-          validation: { required: 'Visa title is required' },
+          name: "workAuthorization.visaTitle",
+          label: "Specify the visa title",
+          type: "input",
+          validation: { required: "Visa title is required" },
         });
       }
     }
@@ -260,111 +255,109 @@ const OnboardingPage: React.FC = () => {
     // Section: Reference
     fields.push(
       {
-        name: 'references.firstName',
-        label: 'Reference First Name',
-        type: 'input',
-        validation: { required: 'Reference first name is required' },
+        name: "references.firstName",
+        label: "Reference First Name",
+        type: "input",
+        validation: {},
       },
       {
-        name: 'references.lastName',
-        label: 'Reference Last Name',
-        type: 'input',
-        validation: { required: 'Reference last name is required' },
+        name: "references.lastName",
+        label: "Reference Last Name",
+        type: "input",
+        validation: {},
       },
       {
-        name: 'references.middleName',
-        label: 'Reference Middle Name',
-        type: 'input',
+        name: "references.middleName",
+        label: "Reference Middle Name",
+        type: "input",
       },
       {
-        name: 'references.phone',
-        label: 'Reference Phone',
-        type: 'input',
+        name: "references.phone",
+        label: "Reference Phone",
+        type: "input",
         validation: {
-          required: 'Reference phone is required',
           pattern: {
             value: /^(\+?\d{1,3}[- ]?)?\d{10}$/,
-            message: 'Invalid phone number',
+            message: "Invalid phone number",
           },
         },
       },
       {
-        name: 'references.email',
-        label: 'Reference Email',
-        type: 'input',
+        name: "references.email",
+        label: "Reference Email",
+        type: "input",
         validation: {
-          required: 'Reference email is required',
           pattern: {
             value: /^\S+@\S+$/i,
-            message: 'Invalid email address',
+            message: "Invalid email address",
           },
         },
       },
       {
-        name: 'references.relationship',
-        label: 'Relationship',
-        type: 'input',
-        validation: { required: 'Relationship is required' },
+        name: "references.relationship",
+        label: "Relationship",
+        type: "input",
+        validation: {},
       }
     );
 
     // Section: Emergency Contact
     fields.push(
       {
-        name: 'emergencyContact.firstName',
-        label: 'Emergency Contact First Name',
-        type: 'input',
-        validation: { required: 'Emergency contact first name is required' },
+        name: "emergencyContact.firstName",
+        label: "Emergency Contact First Name",
+        type: "input",
+        validation: { required: "Emergency contact first name is required" },
       },
       {
-        name: 'emergencyContact.lastName',
-        label: 'Emergency Contact Last Name',
-        type: 'input',
-        validation: { required: 'Emergency contact last name is required' },
+        name: "emergencyContact.lastName",
+        label: "Emergency Contact Last Name",
+        type: "input",
+        validation: { required: "Emergency contact last name is required" },
       },
       {
-        name: 'emergencyContact.middleName',
-        label: 'Emergency Contact Middle Name',
-        type: 'input',
+        name: "emergencyContact.middleName",
+        label: "Emergency Contact Middle Name",
+        type: "input",
       },
       {
-        name: 'emergencyContact.phone',
-        label: 'Emergency Contact Phone',
-        type: 'input',
+        name: "emergencyContact.phone",
+        label: "Emergency Contact Phone",
+        type: "input",
         validation: {
-          required: 'Emergency contact phone is required',
+          required: "Emergency contact phone is required",
           pattern: {
             value: /^(\+?\d{1,3}[- ]?)?\d{10}$/,
-            message: 'Invalid phone number',
+            message: "Invalid phone number",
           },
         },
       },
       {
-        name: 'emergencyContact.email',
-        label: 'Emergency Contact Email',
-        type: 'input',
+        name: "emergencyContact.email",
+        label: "Emergency Contact Email",
+        type: "input",
         validation: {
-          required: 'Emergency contact email is required',
+          required: "Emergency contact email is required",
           pattern: {
             value: /^\S+@\S+$/i,
-            message: 'Invalid email address',
+            message: "Invalid email address",
           },
         },
       },
       {
-        name: 'emergencyContact.relationship',
-        label: 'Emergency Contact Relationship',
-        type: 'input',
-        validation: { required: 'Emergency contact relationship is required' },
+        name: "emergencyContact.relationship",
+        label: "Emergency Contact Relationship",
+        type: "input",
+        validation: { required: "Emergency contact relationship is required" },
       }
     );
 
     // Section: Driver's License Upload
     fields.push({
-      name: 'documents.driverLicenseUrl',
-      label: 'Driver’s License',
-      type: 'upload',
-      validation: { required: 'Driver’s License is required' },
+      name: "documents.driverLicenseUrl",
+      label: "Driver’s License",
+      type: "upload",
+      validation: { },
     });
 
     return fields;
@@ -398,9 +391,9 @@ const OnboardingPage: React.FC = () => {
         ).unwrap();
         data.workAuthorization.documents = [
           {
-            name: 'OPTReceipt',
+            name: "OPTReceipt",
             url: uploadResponse.filePath,
-            status: 'Pending',
+            status: "Pending",
           },
         ];
       }
@@ -419,32 +412,33 @@ const OnboardingPage: React.FC = () => {
 
       // Notify user of successful submission
       notification.success({
-        message: 'Application Submitted',
+        message: "Application Submitted",
         description:
-          'Your onboarding application has been submitted successfully and is pending review.',
+          "Your onboarding application has been submitted successfully and is pending review.",
       });
     } catch (error: any) {
-      console.error('Error submitting application:', error);
+      console.error("Error submitting application:", error);
 
       // Handle backend validation errors
       if (error && error.emptyFields && Array.isArray(error.emptyFields)) {
         error.emptyFields.forEach((fieldName: string) => {
           setError(fieldName, {
-            type: 'manual',
-            message: 'This field is required',
+            type: "manual",
+            message: "This field is required",
           });
         });
 
         notification.error({
-          message: 'Submission Failed',
-          description: 'Please fill out all required fields highlighted in red.',
+          message: "Submission Failed",
+          description:
+            "Please fill out all required fields highlighted in red.",
           duration: 10,
         });
       } else {
         notification.error({
-          message: 'Submission Failed',
+          message: "Submission Failed",
           description:
-            error.message || 'There was an error submitting your application.',
+            error.message || "There was an error submitting your application.",
         });
       }
     }
@@ -452,22 +446,25 @@ const OnboardingPage: React.FC = () => {
 
   // New onError function to handle validation errors
   const onError = (errors: any) => {
-    console.error('Form validation errors:', errors);
+    console.error("Form validation errors:", errors);
     // Extract field names with errors
     const errorFields = Object.keys(errors).map((fieldName) => {
-      return fieldName.replace('.', ' ').replace(/([A-Z])/g, ' $1').trim();
+      return fieldName
+        .replace(".", " ")
+        .replace(/([A-Z])/g, " $1")
+        .trim();
     });
     notification.error({
-      message: 'Submission Failed',
+      message: "Submission Failed",
       description: `Please correct the following fields: ${errorFields.join(
-        ', '
+        ", "
       )}`,
       duration: 10,
     });
   };
 
   // Display loading state
-  if (appStatus === 'loading' || !application) {
+  if (appStatus === "loading" || !application) {
     return (
       <div className="flex justify-center items-center my-10">
         <Spin size="large" />
@@ -490,7 +487,7 @@ const OnboardingPage: React.FC = () => {
 
   // Conditional Rendering based on application status
   if (application) {
-    if (application.status === 'Pending') {
+    if (application.status === "Pending") {
       return (
         <div>
           <Title level={2} className="text-center my-6">
@@ -508,12 +505,12 @@ const OnboardingPage: React.FC = () => {
           <ul className="list-disc list-inside">
             {application.documents?.profilePictureUrl && (
               <li>
-                Profile Picture:{' '}
+                Profile Picture:{" "}
                 <span
                   onClick={() =>
                     handleViewDocument(
                       application.documents.profilePictureUrl,
-                      'Profile Picture'
+                      "Profile Picture"
                     )
                   }
                   className="text-blue-500 underline cursor-pointer"
@@ -524,12 +521,12 @@ const OnboardingPage: React.FC = () => {
             )}
             {application.documents?.driverLicenseUrl && (
               <li>
-                Driver’s License:{' '}
+                Driver’s License:{" "}
                 <span
                   onClick={() =>
                     handleViewDocument(
                       application.documents.driverLicenseUrl,
-                      'Driver’s License'
+                      "Driver’s License"
                     )
                   }
                   className="text-blue-500 underline cursor-pointer"
@@ -542,7 +539,7 @@ const OnboardingPage: React.FC = () => {
               application.workAuthorization.documents.map(
                 (doc: any, index: number) => (
                   <li key={index}>
-                    {doc.name}:{' '}
+                    {doc.name}:{" "}
                     <span
                       onClick={() => handleViewDocument(doc.url, doc.name)}
                       className="text-blue-500 underline cursor-pointer"
@@ -560,16 +557,16 @@ const OnboardingPage: React.FC = () => {
             footer={null}
             onCancel={() => {
               setIsModalVisible(false);
-              setFileType('');
+              setFileType("");
             }}
             width={800}
           >
-            {documentState.status === 'loading' && (
+            {documentState.status === "loading" && (
               <div className="flex justify-center items-center">
                 <Spin size="large" />
               </div>
             )}
-            {documentState.status === 'failed' && (
+            {documentState.status === "failed" && (
               <Alert
                 message="Error"
                 description={documentState.error}
@@ -577,13 +574,15 @@ const OnboardingPage: React.FC = () => {
                 showIcon
               />
             )}
-            {documentState.status === 'succeeded' &&
+            {documentState.status === "succeeded" &&
               documentState.document &&
-              (fileType === 'application/pdf' ? (
+              (fileType === "application/pdf" ? (
                 <Document
                   file={URL.createObjectURL(documentState.document)}
                   onLoadSuccess={onDocumentLoadSuccess}
-                  onLoadError={(error) => console.error('Error loading PDF:', error)}
+                  onLoadError={(error) =>
+                    console.error("Error loading PDF:", error)
+                  }
                 >
                   {Array.from(new Array(numPages), (el, index) => (
                     <Page
@@ -593,11 +592,11 @@ const OnboardingPage: React.FC = () => {
                     />
                   ))}
                 </Document>
-              ) : fileType.startsWith('image/') ? (
+              ) : fileType.startsWith("image/") ? (
                 <img
                   src={URL.createObjectURL(documentState.document)}
                   alt={documentName}
-                  style={{ width: '100%' }}
+                  style={{ width: "100%" }}
                 />
               ) : (
                 <p>Cannot preview this file type.</p>
@@ -605,7 +604,7 @@ const OnboardingPage: React.FC = () => {
           </Modal>
         </div>
       );
-    } else if (application.status === 'Rejected') {
+    } else if (application.status === "Rejected") {
       return (
         <div>
           <Title level={2} className="text-center my-6">
@@ -614,7 +613,7 @@ const OnboardingPage: React.FC = () => {
           <div className="mb-6">
             <Alert
               message="Feedback"
-              description={application.feedback || 'No feedback provided.'}
+              description={application.feedback || "No feedback provided."}
               type="warning"
               showIcon
             />
@@ -629,10 +628,7 @@ const OnboardingPage: React.FC = () => {
           />
         </div>
       );
-    } else if (
-      application.status === 'NeverSubmitted' ||
-      !application.status
-    ) {
+    } else if (application.status === "NeverSubmitted" || !application.status) {
       return (
         <div>
           <Title level={2} className="text-center my-6">
