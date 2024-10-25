@@ -20,6 +20,8 @@ import ReviewOnboardingApplication from './pages/HR/ReviewOnboardingApplication'
 import DocumentViewer from './pages/DocumentViewer';
 
 import { useParams } from 'react-router-dom';
+import VISAStatusManagementPage from './pages/VISAStatusManagementPage';
+import VISAStatusReviewPage from './pages/HR/VISAStatusReviewPage';
 
 // UseParams directly inside the component you need
 const EmployeeProfileWithParams = () => {
@@ -104,6 +106,16 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/visa"
+          element={
+            <PrivateRoute roles={['Employee']}>
+              <MainLayout>
+                <VISAStatusManagementPage />
+              </MainLayout>
+            </PrivateRoute>
+          }
+        />
 
         {/* HR-Only Routes */}
         <Route
@@ -148,7 +160,16 @@ function App() {
           }
         />
 
-
+        <Route
+          path="/visaReview"
+          element={
+            <PrivateRoute roles={['HR']}>
+              <MainLayout>
+                <VISAStatusReviewPage/>
+              </MainLayout>
+            </PrivateRoute>
+          }
+        />
 
         {/* Catch-All Route */}
         <Route path="*" element={<Navigate to="/" replace />} />
