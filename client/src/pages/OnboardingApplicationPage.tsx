@@ -10,7 +10,6 @@ import {
   getMyApplicationThunk,
   updateApplicationThunk,
   submitApplicationThunk,
-  uploadFileThunk,
   Application,
 } from "../features/application/applicationSlice";
 import { Alert, Spin, notification, Typography, Modal } from "antd";
@@ -235,14 +234,7 @@ const OnboardingPage: React.FC = () => {
         }
       );
 
-      if (visaType === "F1(CPT/OPT)") {
-        fields.push({
-          name: "workAuthorization.documents",
-          label: "Upload OPT Receipt",
-          type: "upload",
-          validation: { required: "OPT Receipt is required" },
-        });
-      } else if (visaType === "Other") {
+      if (visaType === "Other") {
         fields.push({
           name: "workAuthorization.visaTitle",
           label: "Specify the visa title",
@@ -358,6 +350,7 @@ const OnboardingPage: React.FC = () => {
       label: "Driver’s License",
       type: "upload",
       validation: { },
+      filename: "DriverLicense.pdf",
     });
 
     return fields;
@@ -365,51 +358,8 @@ const OnboardingPage: React.FC = () => {
 
   const onSubmit = async (data: any) => {
     try {
-      // Handle file uploads
-      const uploadedFiles: any = {};
-
-      // Upload Profile Picture
-      if (data.documents?.profilePictureUrl instanceof File) {
-        const uploadResponse = await dispatch(
-          uploadFileThunk({ file: data.documents.profilePictureUrl })
-        ).unwrap();
-        uploadedFiles.profilePictureUrl = uploadResponse.filePath;
-      }
-
-      // Upload Driver's License
-      if (data.documents?.driverLicenseUrl instanceof File) {
-        const uploadResponse = await dispatch(
-          uploadFileThunk({ file: data.documents.driverLicenseUrl })
-        ).unwrap();
-        uploadedFiles.driverLicenseUrl = uploadResponse.filePath;
-      }
-
-      // Upload Work Authorization Documents
-      if (data.workAuthorization?.documents instanceof File) {
-        const uploadResponse = await dispatch(
-          uploadFileThunk({ file: data.workAuthorization.documents })
-        ).unwrap();
-        data.workAuthorization.documents = [
-          {
-            name: "OPTReceipt",
-            url: uploadResponse.filePath,
-            status: "Pending",
-          },
-        ];
-      }
-
-      // Update application data with uploaded file paths
-      data.documents = {
-        ...data.documents,
-        ...uploadedFiles,
-      };
-
-      // Dispatch updateApplicationThunk to update the application data
       await dispatch(updateApplicationThunk({ updateData: data })).unwrap();
-
-      // Dispatch submitApplicationThunk to submit the application
       await dispatch(submitApplicationThunk()).unwrap();
-
       // Notify user of successful submission
       notification.success({
         message: "Application Submitted",

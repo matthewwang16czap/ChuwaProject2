@@ -1,5 +1,5 @@
 import { Controller, UseFormReturn, FieldValues, Path } from "react-hook-form";
-import { Form, Input, Upload, Button } from "antd";
+import { Form, Input, Upload, Button, Radio, Select, DatePicker } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { UploadFile, UploadFileStatus } from "antd/lib/upload/interface";
 import { useDispatch } from "react-redux"; // Import useDispatch
@@ -7,6 +7,8 @@ import { AppDispatch } from "../app/store";
 import { uploadFileThunk } from "../features/application/applicationSlice"; // Adjust import as needed
 import { get } from "lodash";
 import axiosInstance from "../api/axiosInstance";
+import moment from "moment";
+
 
 // Define the Field interface
 export interface Field<T extends FieldValues> {
@@ -89,7 +91,104 @@ const PrototypeForm = <T extends FieldValues>({
               </Form.Item>
             );
           // Other cases...
+          case "date":
+            return (
+              <Form.Item
+                key={field.name}
+                label={
+                  <>
+                    {field.label}{" "}
+                    {isRequired && <span style={{ color: "red" }}>*</span>}
+                  </>
+                }
+                validateStatus={error ? "error" : ""}
+                help={error?.message?.toString()}
+              >
+                <Controller
+                  name={field.name}
+                  control={control}
+                  rules={field.validation}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <DatePicker
+                      onChange={(date, dateString) => onChange(dateString)}
+                      onBlur={onBlur}
+                      value={value ? moment(value) : null}
+                      disabled={field.disabled}
+                      placeholder={field.label}
+                    />
+                  )}
+                />
+              </Form.Item>
+            );
 
+          case "radio":
+            return (
+              <Form.Item
+                key={field.name}
+                label={
+                  <>
+                    {field.label}{" "}
+                    {isRequired && <span style={{ color: "red" }}>*</span>}
+                  </>
+                }
+                validateStatus={error ? "error" : ""}
+                help={error?.message?.toString()}
+              >
+                <Controller
+                  name={field.name}
+                  control={control}
+                  rules={field.validation}
+                  render={({ field: { onChange, value } }) => (
+                    <Radio.Group
+                      onChange={onChange}
+                      value={value}
+                      disabled={field.disabled}
+                    >
+                      {field.options?.map((option) => (
+                        <Radio key={option.value} value={option.value}>
+                          {option.label}
+                        </Radio>
+                      ))}
+                    </Radio.Group>
+                  )}
+                />
+              </Form.Item>
+            );
+
+          case "select":
+            return (
+              <Form.Item
+                key={field.name}
+                label={
+                  <>
+                    {field.label}{" "}
+                    {isRequired && <span style={{ color: "red" }}>*</span>}
+                  </>
+                }
+                validateStatus={error ? "error" : ""}
+                help={error?.message?.toString()}
+              >
+                <Controller
+                  name={field.name}
+                  control={control}
+                  rules={field.validation}
+                  render={({ field: { onChange, value } }) => (
+                    <Select
+                      onChange={onChange}
+                      value={value}
+                      disabled={field.disabled}
+                      placeholder={field.label}
+                    >
+                      {field.options?.map((option) => (
+                        <Select.Option key={option.value} value={option.value}>
+                          {option.label}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  )}
+                />
+              </Form.Item>
+            );
           case "upload":
             return (
               <Form.Item
@@ -142,22 +241,27 @@ const PrototypeForm = <T extends FieldValues>({
 
                     const handleFileClick = async (fileUrl: string) => {
                       try {
-                        const response = await axiosInstance.get(`/${fileUrl}`, {
-                          responseType: 'blob', // or display pdf directly depending on the type
-                        });
-                
+                        const response = await axiosInstance.get(
+                          `/${fileUrl}`,
+                          {
+                            responseType: "blob", // or display pdf directly depending on the type
+                          }
+                        );
+
                         // Handle file response (e.g., download the file or open it)
-                        const blob = new Blob([response.data], { type: response.headers['content-type'] });
+                        const blob = new Blob([response.data], {
+                          type: response.headers["content-type"],
+                        });
                         const downloadUrl = URL.createObjectURL(blob);
                         window.open(downloadUrl); // Opens the file in a new tab
-                
+
                         // Optionally, handle the file to be downloaded directly:
                         // const link = document.createElement('a');
                         // link.href = downloadUrl;
                         // link.download = file.name;
                         // link.click();
                       } catch (error) {
-                        console.error('Error downloading the file:', error);
+                        console.error("Error downloading the file:", error);
                       }
                     };
 
