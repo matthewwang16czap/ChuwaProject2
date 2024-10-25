@@ -12,7 +12,6 @@ import {
 } from '../../features/application/applicationSlice';
 import { RootState, AppDispatch } from '../../app/store';
 import { Table, Button, Typography, Spin, Alert, Modal, Input, message } from 'antd';
-import { IApplication } from '../../models/application'; // Import the IApplication interface
 import dayjs from 'dayjs';
 
 const { Title } = Typography;
