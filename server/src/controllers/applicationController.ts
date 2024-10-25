@@ -203,10 +203,15 @@ export const updateApplication: RequestHandler = async (
       ...updateData
     } = req.body;
 
+    let finalUpdateData = updateData;
+    if (workAuthorization) {
+      const {visaType, visaTitle, startDate, endDate} = workAuthorization;
+      finalUpdateData = {...updateData, workAuthorization: {visaType, visaTitle, startDate, endDate}};
+    } 
     // Update the application with the remaining fields
     const updatedApplication = await Application.findByIdAndUpdate(
       applicationId,
-      { $set: updateData },
+      { $set: finalUpdateData },
       { new: true, runValidators: true }
     );
 
@@ -242,7 +247,7 @@ export const submitApplication: RequestHandler = async (
       return;
     }
 
-    const fieldsToExclude: Array<keyof IApplication> = [
+    const fieldsToExclude: Array<String> = [
       "middleName",
       "preferredName",
       "documents",
@@ -250,6 +255,7 @@ export const submitApplication: RequestHandler = async (
       "references",
       "emergencyContact",
       "feedback",
+      "workPhone",
     ];
     const applicationObject = application.toObject();
     const emptyFields: string[] = [];
@@ -264,11 +270,11 @@ export const submitApplication: RequestHandler = async (
 
     // Use Object.entries to iterate over the applicationObject
     Object.entries(applicationObject).forEach(([key, value]) => {
-      if (fieldsToExclude.includes(key as keyof IApplication)) return;
-
+      if (fieldsToExclude.includes(key)) return;
       // If value is an object, check its entries
       if (typeof value === "object" && value !== null) {
         Object.entries(value).forEach(([subKey, subValue]) => {
+          if (fieldsToExclude.includes(subKey)) return;
           if (isEmptyField(subValue)) {
             emptyFields.push(`${key}.${subKey}`);
           }

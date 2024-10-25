@@ -1,6 +1,6 @@
 // OnboardingPage.tsx
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PrototypeForm, { Field } from "../forms/PrototypeForm";
 import { useForm } from "react-hook-form";
@@ -12,16 +12,13 @@ import {
   submitApplicationThunk,
   Application,
 } from "../features/application/applicationSlice";
-import { Alert, Spin, notification, Typography, Modal } from "antd";
+import { Alert, Spin, notification, Typography } from "antd";
 
 const { Title } = Typography;
 
 const OnboardingPage: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
-
-  // State for document preview
-  const [isModalVisible, setIsModalVisible] = useState(false);
 
   // Selectors to access Redux state
   const {
@@ -37,7 +34,7 @@ const OnboardingPage: React.FC = () => {
     reValidateMode: "onSubmit",
   });
 
-  const { handleSubmit, watch, reset, setError } = methods;
+  const { handleSubmit, watch, reset } = methods;
 
   // Watch for dynamic fields
   const citizenship = watch("citizenship");
@@ -349,16 +346,16 @@ const OnboardingPage: React.FC = () => {
       name: "documents.driverLicenseUrl",
       label: "Driver’s License",
       type: "upload",
-      validation: { },
+      validation: {},
       filename: "DriverLicense.pdf",
     });
 
     return fields;
   };
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: unknown) => {
     try {
-      await dispatch(updateApplicationThunk({ updateData: data })).unwrap();
+      await dispatch(updateApplicationThunk({ updateData: data as Record<string, unknown> })).unwrap();
       await dispatch(submitApplicationThunk()).unwrap();
       // Notify user of successful submission
       notification.success({
@@ -366,51 +363,19 @@ const OnboardingPage: React.FC = () => {
         description:
           "Your onboarding application has been submitted successfully and is pending review.",
       });
-    } catch (error: any) {
-      console.error("Error submitting application:", error);
-
-      // Handle backend validation errors
-      if (error && error.emptyFields && Array.isArray(error.emptyFields)) {
-        error.emptyFields.forEach((fieldName: string) => {
-          setError(fieldName, {
-            type: "manual",
-            message: "This field is required",
-          });
-        });
-
-        notification.error({
-          message: "Submission Failed",
-          description:
-            "Please fill out all required fields highlighted in red.",
-          duration: 10,
-        });
-      } else {
-        notification.error({
-          message: "Submission Failed",
-          description:
-            error.message || "There was an error submitting your application.",
-        });
-      }
+    } catch (error: unknown) {
+      notification.error({
+        message: "Submission Failed",
+        description:
+          JSON.stringify(error) ||
+          "There was an error submitting your application.",
+      });
     }
   };
 
   // New onError function to handle validation errors
-  const onError = (errors: any) => {
+  const onError = (errors: unknown) => {
     console.error("Form validation errors:", errors);
-    // Extract field names with errors
-    const errorFields = Object.keys(errors).map((fieldName) => {
-      return fieldName
-        .replace(".", " ")
-        .replace(/([A-Z])/g, " $1")
-        .trim();
-    });
-    notification.error({
-      message: "Submission Failed",
-      description: `Please correct the following fields: ${errorFields.join(
-        ", "
-      )}`,
-      duration: 10,
-    });
   };
 
   // Display loading state
@@ -446,112 +411,12 @@ const OnboardingPage: React.FC = () => {
           <Title level={4} className="my-4">
             Your Submitted Application
           </Title>
-          <pre className="bg-gray-100 p-4 rounded">
-            {JSON.stringify(application, null, 2)}
-          </pre>
-          <Title level={4} className="my-4">
-            Uploaded Documents
-          </Title>
-          <ul className="list-disc list-inside">
-            {application.documents?.profilePictureUrl && (
-              <li>
-                Profile Picture:{" "}
-                <span
-                  onClick={() =>
-                    handleViewDocument(
-                      application.documents.profilePictureUrl,
-                      "Profile Picture"
-                    )
-                  }
-                  className="text-blue-500 underline cursor-pointer"
-                >
-                  View
-                </span>
-              </li>
-            )}
-            {application.documents?.driverLicenseUrl && (
-              <li>
-                Driver’s License:{" "}
-                <span
-                  onClick={() =>
-                    handleViewDocument(
-                      application.documents.driverLicenseUrl,
-                      "Driver’s License"
-                    )
-                  }
-                  className="text-blue-500 underline cursor-pointer"
-                >
-                  View
-                </span>
-              </li>
-            )}
-            {application.workAuthorization?.documents &&
-              application.workAuthorization.documents.map(
-                (doc: any, index: number) => (
-                  <li key={index}>
-                    {doc.name}:{" "}
-                    <span
-                      onClick={() => handleViewDocument(doc.url, doc.name)}
-                      className="text-blue-500 underline cursor-pointer"
-                    >
-                      View
-                    </span>
-                  </li>
-                )
-              )}
-          </ul>
-
-          {/* Modal for Document Preview */}
-          <Modal
-            open={isModalVisible}
-            footer={null}
-            onCancel={() => {
-              setIsModalVisible(false);
-              setFileType("");
-            }}
-            width={800}
-          >
-            {documentState.status === "loading" && (
-              <div className="flex justify-center items-center">
-                <Spin size="large" />
-              </div>
-            )}
-            {documentState.status === "failed" && (
-              <Alert
-                message="Error"
-                description={documentState.error}
-                type="error"
-                showIcon
-              />
-            )}
-            {documentState.status === "succeeded" &&
-              documentState.document &&
-              (fileType === "application/pdf" ? (
-                <Document
-                  file={URL.createObjectURL(documentState.document)}
-                  onLoadSuccess={onDocumentLoadSuccess}
-                  onLoadError={(error) =>
-                    console.error("Error loading PDF:", error)
-                  }
-                >
-                  {Array.from(new Array(numPages), (el, index) => (
-                    <Page
-                      key={`page_${index + 1}`}
-                      pageNumber={index + 1}
-                      width={750}
-                    />
-                  ))}
-                </Document>
-              ) : fileType.startsWith("image/") ? (
-                <img
-                  src={URL.createObjectURL(documentState.document)}
-                  alt={documentName}
-                  style={{ width: "100%" }}
-                />
-              ) : (
-                <p>Cannot preview this file type.</p>
-              ))}
-          </Modal>
+          <PrototypeForm
+            fields={getFields().map(field => ({...field, disabled: true}))}
+            onSubmit={()=> {}}
+            methods={methods}
+            showSubmitButton={false}
+          />
         </div>
       );
     } else if (application.status === "Rejected") {

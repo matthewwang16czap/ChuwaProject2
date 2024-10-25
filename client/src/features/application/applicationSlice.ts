@@ -155,7 +155,7 @@ export const uploadFileThunk = createAsyncThunk<
     return response.data;
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
-      return rejectWithValue(err.response.data.message);
+      return rejectWithValue(err.response.data);
     }
     return rejectWithValue("Unknown error");
   }
@@ -179,8 +179,8 @@ export const getMyApplicationThunk = createAsyncThunk<
       }
     } catch (err: unknown) {
       if (err instanceof AxiosError && err.response && err.response.data) {
-        console.error("API Error:", err.response.data.message);
-        return rejectWithValue(err.response.data.message);
+        console.error("API Error:", err.response.data);
+        return rejectWithValue(err.response.data);
       }
       console.error("Unknown Error");
       return rejectWithValue("Unknown error");
@@ -200,7 +200,7 @@ export const updateApplicationThunk = createAsyncThunk<
     return response.data;
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
-      return rejectWithValue(err.response.data.message);
+      return rejectWithValue(err.response.data);
     }
     return rejectWithValue("Unknown error");
   }
@@ -217,7 +217,7 @@ export const submitApplicationThunk =
         return response.data;
       } catch (err: unknown) {
         if (err instanceof AxiosError && err.response) {
-          return rejectWithValue(err.response.data.message);
+          return rejectWithValue(err.response.data);
         }
         return rejectWithValue("Unknown error");
       }
@@ -240,7 +240,7 @@ export const decideApplicationThunk = createAsyncThunk<
     return response.data;
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
-      return rejectWithValue(err.response.data.message);
+      return rejectWithValue(err.response.data);
     }
     return rejectWithValue("Unknown error");
   }
@@ -262,7 +262,7 @@ export const decideDocumentThunk = createAsyncThunk<
     return response.data;
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
-      return rejectWithValue(err.response.data.message);
+      return rejectWithValue(err.response.data);
     }
     return rejectWithValue("Unknown error");
   }
@@ -276,7 +276,7 @@ export const getApplicationThunk = createAsyncThunk(
       return response.data;
     } catch (err: unknown) {
       if (err instanceof AxiosError && err.response) {
-        return rejectWithValue(err.response.data.message);
+        return rejectWithValue(err.response.data);
       }
       return rejectWithValue("Unknown error");
     }
@@ -291,7 +291,7 @@ export const searchApplicationThunk = createAsyncThunk(
       return response.data;
     } catch (err: unknown) {
       if (err instanceof AxiosError && err.response) {
-        return rejectWithValue(err.response.data.message);
+        return rejectWithValue(err.response.data);
       }
       return rejectWithValue("Unknown error");
     }
@@ -317,7 +317,7 @@ const applicationSlice = createSlice({
       })
       .addCase(uploadFileThunk.rejected, (state, action) => {
         state.status = "failed";
-        state.error = (action.payload as string) ?? "Unknown error";
+        state.error = JSON.stringify(action.payload) ?? "Unknown error";
       })
 
       // Get My Application
@@ -332,7 +332,7 @@ const applicationSlice = createSlice({
       })
       .addCase(getMyApplicationThunk.rejected, (state, action) => {
         state.status = "failed";
-        state.error = (action.payload as string) ?? "Unknown error";
+        state.error = JSON.stringify(action.payload) ?? "Unknown error";
       })
 
       // Update Application
@@ -348,7 +348,7 @@ const applicationSlice = createSlice({
       })
       .addCase(updateApplicationThunk.rejected, (state, action) => {
         state.status = "failed";
-        state.error = (action.payload as string) ?? "Unknown error";
+        state.error = JSON.stringify(action.payload) ?? "Unknown error";
       })
 
       // Submit Application
@@ -364,7 +364,7 @@ const applicationSlice = createSlice({
       })
       .addCase(submitApplicationThunk.rejected, (state, action) => {
         state.status = "failed";
-        state.error = (action.payload as string) ?? "Unknown error";
+        state.error = JSON.stringify(action.payload) ?? "Unknown error";
       })
 
       // Decide Application
@@ -380,7 +380,7 @@ const applicationSlice = createSlice({
       })
       .addCase(decideApplicationThunk.rejected, (state, action) => {
         state.status = "failed";
-        state.error = (action.payload as string) ?? "Unknown error";
+        state.error = JSON.stringify(action.payload) ?? "Unknown error";
       })
 
       // Decide Document
@@ -396,7 +396,7 @@ const applicationSlice = createSlice({
       })
       .addCase(decideDocumentThunk.rejected, (state, action) => {
         state.status = "failed";
-        state.error = (action.payload as string) ?? "Unknown error";
+        state.error = JSON.stringify(action.payload) ?? "Unknown error";
       })
 
       // Get Application
@@ -411,7 +411,7 @@ const applicationSlice = createSlice({
       })
       .addCase(getApplicationThunk.rejected, (state, action) => {
         state.status = "failed";
-        state.error = (action.payload as string) ?? "Unknown error";
+        state.error = JSON.stringify(action.payload) ?? "Unknown error";
       })
 
       // Search Application
@@ -426,7 +426,7 @@ const applicationSlice = createSlice({
       })
       .addCase(searchApplicationThunk.rejected, (state, action) => {
         state.status = "failed";
-        state.error = (action.payload as string) ?? "Unknown error";
+        state.error = JSON.stringify(action.payload) ?? "Unknown error";
       });
   },
 });

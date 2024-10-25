@@ -9,7 +9,6 @@ import { get } from "lodash";
 import axiosInstance from "../api/axiosInstance";
 import moment from "moment";
 
-
 // Define the Field interface
 export interface Field<T extends FieldValues> {
   name: Path<T>;
@@ -274,7 +273,12 @@ const PrototypeForm = <T extends FieldValues>({
                           onRemove={() => onChange(null)} // Clear the state when the file is removed
                           onPreview={(file) => handleFileClick(file.url || "")}
                         >
-                          <Button icon={<UploadOutlined />}>
+                          <Button
+                            icon={<UploadOutlined />}
+                            onClick={(e) => {
+                              e.preventDefault();
+                            }}
+                          >
                             Click to Upload
                           </Button>
                         </Upload>
