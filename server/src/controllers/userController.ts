@@ -173,11 +173,11 @@ export const getAllEmployeeUsers: RequestHandler = async (
       "_id username role email"
     )
       .populate({
-        path: "employeeId", // Populate employeeId from Employee schema
+        path: "employeeId",
         select:
-          "_id firstName lastName preferredName ssn dateOfBirth gender employment",
+          "_id firstName lastName preferredName ssn dateOfBirth gender citizenship employment contactInfo",
         populate: {
-          path: "applicationId", // Populate applicationId from Application schema
+          path: "applicationId",
           select: "workAuthorization status",
           model: "Application",
         },
@@ -306,7 +306,8 @@ export const getEmployeeUserById: RequestHandler = async (
     )
       .populate({
         path: "employeeId",
-        select: "_id firstName lastName preferredName ssn dateOfBirth gender citizenship employment contactInfo",
+        select:
+          "_id firstName lastName preferredName ssn dateOfBirth gender citizenship employment contactInfo",
         populate: {
           path: "applicationId",
           select: "workAuthorization status",
@@ -329,7 +330,8 @@ export const getEmployeeUserById: RequestHandler = async (
     } else if (user.employeeId?.applicationId.status === "Rejected") {
       user.nextStep = "ReSubmitApplication";
     } else {
-      const documents = user.employeeId?.applicationId.workAuthorization.documents;
+      const documents =
+        user.employeeId?.applicationId.workAuthorization.documents;
       let allDocumentsCompleted = true;
 
       if (documents) {
