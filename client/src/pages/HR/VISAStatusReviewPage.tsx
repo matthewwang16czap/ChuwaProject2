@@ -15,9 +15,7 @@ import {
 import { DownloadOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../../app/store';
-import {
-  getAllEmployeesThunk,
-} from '../../features/employee/employeeSlice';
+import { getAllEmployeeUsers } from '../../features/user/userSlice';
 import {
   getApplicationThunk,
   decideDocumentThunk,

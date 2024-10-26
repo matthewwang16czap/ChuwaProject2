@@ -8,62 +8,63 @@ interface IDocument {
   name: string;
   url: string | null;
   status: "NeverSubmitted" | "Pending" | "Approved" | "Rejected";
-  feedback?: string;
+  feedback: string;
 }
 
 interface IWorkAuthorization {
   visaType: "H1-B" | "L2" | "F1(CPT/OPT)" | "H4" | "Other";
-  visaTitle?: string;
+  visaTitle: string;
   startDate: Date;
-  endDate?: Date;
-  documents?: IDocument[];
+  endDate: Date;
+  documents: IDocument[];
 }
 
 export interface Application {
+  _id: string;
   employeeId: string;
   email: string;
   firstName: string;
   lastName: string;
-  middleName?: string;
-  preferredName?: string;
-  address?: {
+  middleName: string;
+  preferredName: string;
+  address: {
     building: string;
     street: string;
     city: string;
     state: string;
     zip: string;
   };
-  contactInfo?: {
+  contactInfo: {
     cellPhone: string;
-    workPhone?: string;
+    workPhone: string;
   };
-  ssn?: string;
-  dateOfBirth?: Date;
-  gender?: "Male" | "Female" | "Other";
-  citizenship?: "GreenCard" | "Citizen" | "WorkAuthorization";
-  workAuthorization?: IWorkAuthorization;
-  references?: {
+  ssn: string;
+  dateOfBirth: Date;
+  gender: "Male" | "Female" | "Other";
+  citizenship: "GreenCard" | "Citizen" | "WorkAuthorization";
+  workAuthorization: IWorkAuthorization;
+  references: {
     firstName: string;
     lastName: string;
-    middleName?: string;
+    middleName: string;
     phone: string;
     email: string;
     relationship: string;
   };
-  emergencyContact?: {
+  emergencyContact: {
     firstName: string;
     lastName: string;
-    middleName?: string;
+    middleName: string;
     phone: string;
     email: string;
     relationship: string;
   };
-  documents?: {
-    profilePictureUrl?: string;
-    driverLicenseUrl?: string;
+  documents: {
+    profilePictureUrl: string;
+    driverLicenseUrl: string;
   };
   status: "NeverSubmitted" | "Pending" | "Approved" | "Rejected";
-  feedback?: string;
+  feedback: string;
 }
 
 interface UploadFilePayload {
@@ -92,7 +93,7 @@ interface SubmitApplicationResponse {
 interface DecideApplicationPayload {
   applicationId: string;
   status: "Approved" | "Rejected";
-  feedback?: string; // Required if status is "Rejected"
+  feedback: string; 
 }
 
 interface DecideApplicationResponse {
@@ -104,7 +105,7 @@ interface DecideDocumentPayload {
   applicationId: string;
   documentName: string;
   status: "Approved" | "Rejected";
-  feedback?: string; // Required if status is "Rejected"
+  feedback: string; 
 }
 
 interface DecideDocumentResponse {
@@ -162,31 +163,28 @@ export const uploadFileThunk = createAsyncThunk<
 });
 
 export const getMyApplicationThunk = createAsyncThunk<
-  { application: Application }, 
+  { application: Application },
   void,
   { rejectValue: string }
->(
-  "application/getMyApplication",
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.get(`${API_URL}/myapplication`);
-      console.log("API Response:", response.data);
-      if (response.data && response.data.application) {
-        return { application: response.data.application };
-      } else {
-        console.error("Invalid response structure");
-        return rejectWithValue("Invalid response structure");
-      }
-    } catch (err: unknown) {
-      if (err instanceof AxiosError && err.response && err.response.data) {
-        console.error("API Error:", err.response.data);
-        return rejectWithValue(err.response.data);
-      }
-      console.error("Unknown Error");
-      return rejectWithValue("Unknown error");
+>("application/getMyApplication", async (_, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.get(`${API_URL}/myapplication`);
+    console.log("API Response:", response.data);
+    if (response.data && response.data.application) {
+      return { application: response.data.application };
+    } else {
+      console.error("Invalid response structure");
+      return rejectWithValue("Invalid response structure");
     }
+  } catch (err: unknown) {
+    if (err instanceof AxiosError && err.response && err.response.data) {
+      console.error("API Error:", err.response.data);
+      return rejectWithValue(err.response.data);
+    }
+    console.error("Unknown Error");
+    return rejectWithValue("Unknown error");
   }
-);
+});
 
 export const updateApplicationThunk = createAsyncThunk<
   UpdateApplicationResponse,
@@ -209,7 +207,7 @@ export const updateApplicationThunk = createAsyncThunk<
 export const submitApplicationThunk =
   createAsyncThunk<SubmitApplicationResponse>(
     "application/submitApplication",
-    async (payload, { rejectWithValue }) => {
+    async (_, { rejectWithValue }) => {
       try {
         const response = await axiosInstance.put<SubmitApplicationResponse>(
           `${API_URL}/submit`
@@ -268,35 +266,43 @@ export const decideDocumentThunk = createAsyncThunk<
   }
 });
 
-export const getApplicationThunk = createAsyncThunk(
-  "application/getApplication",
-  async (applicationId, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.get(`${API_URL}/${applicationId}`);
-      return response.data;
-    } catch (err: unknown) {
-      if (err instanceof AxiosError && err.response) {
-        return rejectWithValue(err.response.data);
-      }
-      return rejectWithValue("Unknown error");
+export const getApplicationThunk = createAsyncThunk<
+  {
+    message: string;
+    application: Application;
+  },
+  string
+>("application/getApplication", async (applicationId, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.get(`${API_URL}/${applicationId}`);
+    return response.data;
+  } catch (err: unknown) {
+    if (err instanceof AxiosError && err.response) {
+      return rejectWithValue(err.response.data);
     }
+    return rejectWithValue("Unknown error");
   }
-);
+});
 
-export const searchApplicationThunk = createAsyncThunk(
-  "application/searchApplication",
-  async (documents: string[], { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.post(`${API_URL}/search`, { documents });
-      return response.data;
-    } catch (err: unknown) {
-      if (err instanceof AxiosError && err.response) {
-        return rejectWithValue(err.response.data);
-      }
-      return rejectWithValue("Unknown error");
+export const searchApplicationThunk = createAsyncThunk<
+  {
+    message: string;
+    application: Application;
+  },
+  string[]
+>("application/searchApplication", async (documents, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.post(`${API_URL}/search`, {
+      documents,
+    });
+    return response.data;
+  } catch (err: unknown) {
+    if (err instanceof AxiosError && err.response) {
+      return rejectWithValue(err.response.data);
     }
+    return rejectWithValue("Unknown error");
   }
-);
+});
 
 // Update the slice
 const applicationSlice = createSlice({

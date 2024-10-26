@@ -4,11 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   getAllEmployeeUsers,
-  IUser,
+  EmployeeUser,
 } from '../../features/user/userSlice';
 import {
   decideApplicationThunk,
   getApplicationThunk,
+  Application
 } from '../../features/application/applicationSlice';
 import { RootState, AppDispatch } from '../../app/store';
 import { Table, Button, Typography, Spin, Alert, Modal, Input, message } from 'antd';
@@ -25,11 +26,11 @@ const ReviewOnboardingApplication: React.FC = () => {
   );
 
   const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
-  const [selectedApplication, setSelectedApplication] = useState<IApplication | null>(null);
+  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [feedback, setFeedback] = useState('');
 
   const [applicationModalVisible, setApplicationModalVisible] = useState(false);
-  const [selectedApplicationDetails, setSelectedApplicationDetails] = useState<IApplication | null>(null);
+  const [selectedApplicationDetails, setSelectedApplicationDetails] = useState<Application | null>(null);
   const [applicationDetailsLoading, setApplicationDetailsLoading] = useState(false);
 
   useEffect(() => {
@@ -72,7 +73,7 @@ const ReviewOnboardingApplication: React.FC = () => {
       title: 'Full Name',
       dataIndex: ['employeeId', 'fullName'],
       key: 'fullName',
-      render: (_: any, record: IUser) =>
+      render: (_: unknown, record: EmployeeUser) =>
         `${record.employeeId.firstName} ${record.employeeId.lastName}`,
     },
     {
@@ -83,10 +84,10 @@ const ReviewOnboardingApplication: React.FC = () => {
     {
       title: 'View Application',
       key: 'viewApplication',
-      render: (_: any, record: IUser) => (
+      render: (_: unknown, record: EmployeeUser) => (
         <Button
           type="link"
-          onClick={() => openApplicationModal(record.employeeId.applicationId._id)}
+          onClick={() => openApplicationModal(record.employeeId.applicationId?._id || "")}
         >
           View Application
         </Button>
@@ -95,13 +96,13 @@ const ReviewOnboardingApplication: React.FC = () => {
     {
       title: 'Actions',
       key: 'actions',
-      render: (_: any, record: IUser) => {
+      render: (_: unknown, record: EmployeeUser) => {
         if (record.employeeId.applicationId?.status === 'Pending') {
           return (
             <div>
               <Button
                 type="primary"
-                onClick={() => handleApprove(record.employeeId.applicationId._id)}
+                onClick={() => handleApprove(record.employeeId.applicationId?._id  || "")}
                 style={{ marginRight: 8 }}
               >
                 Approve
@@ -125,6 +126,7 @@ const ReviewOnboardingApplication: React.FC = () => {
         decideApplicationThunk({
           applicationId,
           status: 'Approved',
+          feedback: ""
         })
       ).unwrap();
       message.success('Application approved successfully');
@@ -142,7 +144,7 @@ const ReviewOnboardingApplication: React.FC = () => {
     }
   };
 
-  const openFeedbackModal = (application: IApplication) => {
+  const openFeedbackModal = (application: Application | null) => {
     setSelectedApplication(application);
     setFeedback('');
     setFeedbackModalVisible(true);
@@ -201,7 +203,7 @@ const ReviewOnboardingApplication: React.FC = () => {
         <Table
           dataSource={pendingApplications}
           columns={columns}
-          rowKey={(record) => record.employeeId.applicationId._id}
+          rowKey={(record) => record.employeeId.applicationId?._id}
         />
       </div>
 
@@ -211,7 +213,7 @@ const ReviewOnboardingApplication: React.FC = () => {
         <Table
           dataSource={rejectedApplications}
           columns={columns.filter((col) => col.key !== 'actions')}
-          rowKey={(record) => record.employeeId.applicationId._id}
+          rowKey={(record) => record.employeeId.applicationId?._id}
         />
       </div>
 
@@ -221,7 +223,7 @@ const ReviewOnboardingApplication: React.FC = () => {
         <Table
           dataSource={approvedApplications}
           columns={columns.filter((col) => col.key !== 'actions')}
-          rowKey={(record) => record.employeeId.applicationId._id}
+          rowKey={(record) => record.employeeId.applicationId?._id}
         />
       </div>
 

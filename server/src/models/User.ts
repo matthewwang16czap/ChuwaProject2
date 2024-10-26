@@ -7,9 +7,8 @@ interface IUser extends Document {
   username: string;
   email: string;
   role: "HR" | "Employee"; // Role can be either HR or Employee
-  employeeId?: mongoose.Types.ObjectId; // Reference to the Employee schema
+  employeeId: mongoose.Types.ObjectId; // Reference to the Employee schema
   password: string; // Hashed password
-  nextStep?: string;
   verifyPassword(plainPassword: string): Promise<boolean>; // Password verification method
 }
 

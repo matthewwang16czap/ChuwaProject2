@@ -76,10 +76,7 @@ export const sendInvitation = createAsyncThunk<
       await axiosInstance.post(`${API_URL}/sendinvitation`, invitationData);
     } catch (err: unknown) {
       if (err instanceof AxiosError && err.response) {
-        const errorData = err.response.data;
-        const errorMessage =
-          errorData.message || errorData.error || "Error sending invitation.";
-        return rejectWithValue(errorMessage);
+        return rejectWithValue(err.response.data);
       }
       return rejectWithValue("Unknown error occurred");
     }
@@ -96,10 +93,7 @@ export const register = createAsyncThunk<
     await axiosInstance.post(`${API_URL}/register`, registrationData);
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
-      const errorData = err.response.data;
-      const errorMessage =
-        errorData.message || errorData.error || "Error during registration.";
-      return rejectWithValue(errorMessage);
+      return rejectWithValue(err.response.data);
     }
     return rejectWithValue("Unknown error occurred");
   }
@@ -129,7 +123,7 @@ export const getRegistrationHistory = createAsyncThunk<
       return response.data; // Return the data from the response
     } catch (err: unknown) {
       if (err instanceof AxiosError && err.response) {
-        return rejectWithValue(err.response.data.message);
+        return rejectWithValue(err.response.data);
       }
       return rejectWithValue("Unknown error occurred");
     }
@@ -148,7 +142,7 @@ export const getRegistrations = createAsyncThunk<
     return response.data; // Return the data from the response
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
-      return rejectWithValue(err.response.data.message);
+      return rejectWithValue(err.response.data);
     }
     return rejectWithValue("Unknown error occurred");
   }
@@ -180,7 +174,7 @@ const registrationSlice = createSlice({
         sendInvitation.rejected,
         (state, action: PayloadAction<string | undefined>) => {
           state.invitationStatus = "failed";
-          state.error = (action.payload as string) ?? "Unknown error";
+          state.error = JSON.stringify(action.payload) ?? "Unknown error";
         }
       )
       .addCase(register.pending, (state) => {
@@ -193,7 +187,7 @@ const registrationSlice = createSlice({
         register.rejected,
         (state, action: PayloadAction<string | undefined>) => {
           state.registerStatus = "failed";
-          state.error = (action.payload as string) ?? "Unknown error";
+          state.error = JSON.stringify(action.payload) ?? "Unknown error";
         }
       )
       .addCase(getRegistrationHistory.pending, (state) => {
@@ -207,7 +201,7 @@ const registrationSlice = createSlice({
         getRegistrationHistory.rejected,
         (state, action: PayloadAction<string | undefined>) => {
           state.registrationHistoryStatus = "failed";
-          state.error = (action.payload as string) ?? "Unknown error";
+          state.error = JSON.stringify(action.payload) ?? "Unknown error";
         }
       )
       .addCase(getRegistrations.pending, (state) => {
@@ -221,7 +215,7 @@ const registrationSlice = createSlice({
         getRegistrations.rejected,
         (state, action: PayloadAction<string | undefined>) => {
           state.registrationsStatus = "failed";
-          state.error = (action.payload as string) ?? "Unknown error";
+          state.error = JSON.stringify(action.payload) ?? "Unknown error";
         }
       );
   },

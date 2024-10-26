@@ -79,38 +79,3 @@ export const getEmployee: RequestHandler = async (
     res.status(500).json({ message: "Get failed", error });
   }
 };
-
-export const searchEmployeesByName: RequestHandler = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  const { firstName, lastName, preferredName } = req.body;
-  if (!firstName && !lastName && !preferredName) {
-    res.status(400).json({
-      message:
-        "At least one search parameter (firstName, lastName, preferredName) is required.",
-    });
-    return;
-  }
-  try {
-    const query: any = {};
-
-    if (firstName) query.firstName = firstName;
-    if (lastName) query.lastName = lastName;
-    if (preferredName) query.preferredName = preferredName;
-
-    const employees = await Employee.find({
-      $or: [
-        { firstName: query.firstName },
-        { lastName: query.lastName },
-        { preferredName: query.preferredName },
-      ],
-    });
-    res
-      .status(200)
-      .json({ message: "Search employees successfully", employees });
-  } catch (error) {
-    res.status(500).json({ message: "Error searching for employee", error });
-  }
-};

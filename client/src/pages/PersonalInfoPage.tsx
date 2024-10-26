@@ -6,8 +6,8 @@ import { Modal, Button } from 'antd'; // For confirmation dialog
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from "../app/store"; 
 import {
-  getMyProfileThunk,
-  updateEmployeeThunk,
+  getMyProfile,
+  updateEmployee,
   Employee
 } from '../features/employee/employeeSlice'; // Adjust the path as needed
 import axiosInstance from '../api/axiosInstance';
@@ -35,10 +35,9 @@ const PersonalInfoPage: React.FC = () => {
   const { reset, handleSubmit } = methods;
 
   useEffect(() => {
-    // Fetch employee information using getMyProfileThunk
     const fetchEmployeeInfo = async () => {
       try {
-        dispatch(getMyProfileThunk());
+        dispatch(getMyProfile());
       } catch (error) {
         console.error('Error fetching employee info:', error);
       } finally {
@@ -86,9 +85,9 @@ const PersonalInfoPage: React.FC = () => {
           updateData = {
             firstName: data.firstName,
             lastName: data.lastName,
-            middleName: data.middleName,
+            middleName: data.middleName, 
             preferredName: data.preferredName,
-            profilePictureUrl: data.documents?.profilePictureUrl,
+            profilePictureUrl: data.documents.profilePictureUrl,
             ssn: data.ssn,
             dateOfBirth: data.dateOfBirth,
             gender: data.gender,
@@ -118,8 +117,7 @@ const PersonalInfoPage: React.FC = () => {
           break;
       }
 
-      // Dispatch the updateEmployeeThunk with the updated data
-      await dispatch(updateEmployeeThunk(updateData));
+      await dispatch(updateEmployee(updateData));
 
       // Exit edit mode
       setEditSections((prev) => ({ ...prev, [section]: false }));
