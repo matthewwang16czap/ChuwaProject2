@@ -31,6 +31,11 @@ const EmployeeProfilesPage: React.FC = () => {
     dispatch(getAllEmployeeUsers({}));
   }, [dispatch]);
 
+  useEffect(() => {
+    // Fetch all employees on component mount
+    console.log(employeeUsers);
+  });
+
   // Debounced search function to reduce API calls
   const debouncedSearch = useCallback(
     debounce((query: string) => {
