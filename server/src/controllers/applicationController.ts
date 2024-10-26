@@ -346,6 +346,7 @@ export const decideApplication: RequestHandler = async (
           name: "OPTReceipt",
           status: "NeverSubmitted",
           url: null,
+          feedback: ""
         });
       }
       // update Employee document
@@ -366,16 +367,16 @@ export const decideApplication: RequestHandler = async (
       // Fill employee address
       employee.citizenship = application.citizenship || "WorkAuthorization";
       employee.address = {
-        building: application.address?.building || "",
-        street: application.address?.street || "",
-        city: application.address?.city || "",
-        state: application.address?.state || "",
-        zip: application.address?.zip || "",
+        building: application.address.building || "",
+        street: application.address.street || "",
+        city: application.address.city || "",
+        state: application.address.state || "",
+        zip: application.address.zip || "",
       };
       // Fill employee contact info
       employee.contactInfo = {
-        cellPhone: application.contactInfo?.cellPhone || "",
-        workPhone: application.contactInfo?.workPhone || "",
+        cellPhone: application.contactInfo.cellPhone || "",
+        workPhone: application.contactInfo.workPhone || "",
       };
       // Fill employment information from workAuthorization
       if (application.workAuthorization) {
@@ -399,8 +400,8 @@ export const decideApplication: RequestHandler = async (
       }
       // Fill documents if available
       employee.documents = {
-        profilePictureUrl: application.documents?.profilePictureUrl || "",
-        driverLicenseUrl: application.documents?.driverLicenseUrl || "",
+        profilePictureUrl: application.documents.profilePictureUrl || "",
+        driverLicenseUrl: application.documents.driverLicenseUrl || "",
       };
       await employee.save();
     }
@@ -454,7 +455,7 @@ export const decideDocument: RequestHandler = async (
     }
 
     // Find the first document in workAuthorization.documents that is Pending and matches the documentName
-    const pendingDocument = application?.workAuthorization?.documents?.find(
+    const pendingDocument = application.workAuthorization.documents.find(
       (doc) => doc.name === documentName && doc.status === "Pending"
     );
 
@@ -474,22 +475,25 @@ export const decideDocument: RequestHandler = async (
 
       // Push new document based on the current document being processed
       if (documentName === "OPTReceipt") {
-        application?.workAuthorization?.documents?.push({
+        application.workAuthorization.documents.push({
           name: "OPTEAD",
           status: "NeverSubmitted",
           url: null,
+          feedback: ""
         });
       } else if (documentName === "OPTEAD") {
-        application?.workAuthorization?.documents?.push({
+        application.workAuthorization.documents.push({
           name: "I-983",
           status: "NeverSubmitted",
           url: null,
+          feedback: ""
         });
       } else if (documentName === "I-983") {
-        application?.workAuthorization?.documents?.push({
+        application.workAuthorization.documents.push({
           name: "I-20",
           status: "NeverSubmitted",
           url: null,
+          feedback: ""
         });
       }
     }

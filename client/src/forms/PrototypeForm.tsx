@@ -275,6 +275,7 @@ const PrototypeForm = <T extends FieldValues>({
                         >
                           <Button
                             icon={<UploadOutlined />}
+                            disabled={field.disabled}
                             onClick={(e) => {
                               e.preventDefault();
                             }}

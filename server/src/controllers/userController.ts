@@ -48,7 +48,7 @@ interface IEmployee {
   applicationId: IApplication;
   firstName: string;
   lastName: string;
-  preferredName?: string;
+  preferredName: string;
   ssn: string;
   dateOfBirth: Date;
   gender: string;
@@ -60,8 +60,8 @@ interface IUserWithNextStep {
   username: string;
   email: string;
   role: string;
-  employeeId?: IEmployee;
-  nextStep?: string;
+  employeeId: IEmployee;
+  nextStep: string;
 }
 
 enum DocumentType {
@@ -287,5 +287,121 @@ export const getAllEmployeeUsers: RequestHandler = async (
     res.status(200).json({ message: "Search employees successfully", users });
   } catch (error) {
     res.status(500).json({ message: "Error fetching employee users.", error });
+  }
+};
+
+// Middleware to fetch a single user based on userId in params
+export const getEmployeeUserById: RequestHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { userId } = req.params;
+
+    // Fetch a single user who is an employee (excluding HR) by userId
+    const user = await User.findOne(
+      { _id: userId, role: { $ne: "HR" } }, // Exclude HR users and filter by userId
+      "_id username role email"
+    )
+      .populate({
+        path: "employeeId",
+        select: "_id firstName lastName preferredName ssn dateOfBirth gender citizenship employment contactInfo",
+        populate: {
+          path: "applicationId",
+          select: "workAuthorization status",
+          model: "Application",
+        },
+      })
+      .lean<IUserWithNextStep | null>(); // Ensure we get a plain JavaScript object
+
+    // If user is not found, return an error
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    // Determine the next step for the user based on their application status
+    if (user.employeeId?.applicationId.status === "NeverSubmitted") {
+      user.nextStep = "SubmitApplication";
+    } else if (user.employeeId?.applicationId.status === "Pending") {
+      user.nextStep = "WaitReviewApplication";
+    } else if (user.employeeId?.applicationId.status === "Rejected") {
+      user.nextStep = "ReSubmitApplication";
+    } else {
+      const documents = user.employeeId?.applicationId.workAuthorization.documents;
+      let allDocumentsCompleted = true;
+
+      if (documents) {
+        for (const document of documents) {
+          switch (document.status) {
+            case "NeverSubmitted":
+              allDocumentsCompleted = false;
+              switch (document.name) {
+                case DocumentType.OPTReceipt:
+                  user.nextStep = "SubmitOPTReceipt";
+                  break;
+                case DocumentType.OPTEAD:
+                  user.nextStep = "SubmitOPTEAD";
+                  break;
+                case DocumentType.I983:
+                  user.nextStep = "SubmitI983";
+                  break;
+                case DocumentType.I20:
+                  user.nextStep = "SubmitI20";
+                  break;
+              }
+              break;
+
+            case "Pending":
+              allDocumentsCompleted = false;
+              switch (document.name) {
+                case DocumentType.OPTReceipt:
+                  user.nextStep = "WaitReviewOPTReceipt";
+                  break;
+                case DocumentType.OPTEAD:
+                  user.nextStep = "WaitReviewOPTEAD";
+                  break;
+                case DocumentType.I983:
+                  user.nextStep = "WaitReviewI983";
+                  break;
+                case DocumentType.I20:
+                  user.nextStep = "WaitReviewI20";
+                  break;
+              }
+              break;
+
+            case "Rejected":
+              allDocumentsCompleted = false;
+              switch (document.name) {
+                case DocumentType.OPTReceipt:
+                  user.nextStep = "ReSubmitOPTReceipt";
+                  break;
+                case DocumentType.OPTEAD:
+                  user.nextStep = "ReSubmitOPTEAD";
+                  break;
+                case DocumentType.I983:
+                  user.nextStep = "ReSubmitI983";
+                  break;
+                case DocumentType.I20:
+                  user.nextStep = "ReSubmitI20";
+                  break;
+              }
+              break;
+          }
+
+          if (!allDocumentsCompleted) break; // Exit if any document is not completed
+        }
+      }
+
+      if (allDocumentsCompleted) {
+        user.nextStep = "Finished"; // Mark as finished if all documents are complete
+      }
+    }
+
+    // Return the user along with their next step
+    res.status(200).json({ message: "User fetched successfully", user });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching user.", error });
   }
 };

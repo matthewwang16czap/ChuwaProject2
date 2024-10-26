@@ -20,8 +20,10 @@ interface UserState {
   user: IPayload["user"] | null;
   loginStatus: "loading" | "succeeded" | "failed" | null;
   passwordChangeStatus: "loading" | "succeeded" | "failed" | null;
-  employeeUsers: IUser[];
+  employeeUsers: EmployeeUser[];
   employeeUsersStatus: "loading" | "succeeded" | "failed" | null;
+  employeeUser: EmployeeUser | null;
+  employeeUserStatus: "loading" | "succeeded" | "failed" | null;
   error: string | null;
 }
 
@@ -37,7 +39,7 @@ interface PasswordChangePayload {
 }
 
 // Define the user response type
-interface IUser {
+export interface EmployeeUser {
   _id: string;
   username: string;
   role: string;
@@ -46,22 +48,35 @@ interface IUser {
     _id: string;
     firstName: string;
     lastName: string;
-    preferredName?: string;
-    ssn?: string;
-    dateOfBirth?: string;
-    gender?: string;
-    employment?: string;
-    applicationId?: {
-      workAuthorization?: {
+    preferredName: string;
+    ssn: string;
+    dateOfBirth: string;
+    gender: string;
+    citizenship: string;
+    employment: {
+      visaType: string;
+      visaTitle: string;
+      startDate: Date;
+      endDate: Date | null;
+    };
+    contactInfo: {
+      cellPhone: string;
+      workPhone: string;
+    };
+    applicationId: {
+      _id: string;
+      workAuthorization: {
         documents: {
           name: string;
+          url: string;
+          feedback: string;
           status: string;
         }[];
       };
       status: string;
     };
   };
-  nextStep?: string;
+  nextStep: string;
 }
 
 // Initial state
@@ -71,6 +86,8 @@ const initialState: UserState = {
   passwordChangeStatus: null,
   employeeUsers: [],
   employeeUsersStatus: null,
+  employeeUser: null,
+  employeeUserStatus: null,
   error: null,
 };
 
@@ -102,7 +119,7 @@ export const login = createAsyncThunk<
     console.log(token);
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
-      return rejectWithValue(err.response.data.message);
+      return rejectWithValue(err.response.data);
     }
     return rejectWithValue("Unknown error occurred during login.");
   }
@@ -118,7 +135,7 @@ export const changeUserPassword = createAsyncThunk<
     await axiosInstance.post(`${API_URL}/changepassword`, passwordData);
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
-      return rejectWithValue(err.response.data.message);
+      return rejectWithValue(err.response.data);
     }
     return rejectWithValue("Unknown error occurred during password change.");
   }
@@ -126,7 +143,7 @@ export const changeUserPassword = createAsyncThunk<
 
 // Define the AsyncThunk for fetching all employee users
 export const getAllEmployeeUsers = createAsyncThunk<
-  IUser[], // Return type
+  EmployeeUser[], // Return type
   {
     name?: string;
     nextStep?: string;
@@ -141,7 +158,24 @@ export const getAllEmployeeUsers = createAsyncThunk<
     return response.data.users;
   } catch (err: unknown) {
     if (err instanceof AxiosError && err.response) {
-      return rejectWithValue(err.response.data.message);
+      return rejectWithValue(err.response.data);
+    }
+    return rejectWithValue("Error fetching employee users.");
+  }
+});
+
+// Define the AsyncThunk for fetching all employee users
+export const getEmployeeUserById = createAsyncThunk<
+  EmployeeUser, // Return type
+  { userId: string }, // Payload type (search parameters)
+  { rejectValue: string } // Rejection error type
+>("user/getEmployeeUserById", async ({ userId }, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.get(`${API_URL}/${userId}`);
+    return response.data.user;
+  } catch (err: unknown) {
+    if (err instanceof AxiosError && err.response) {
+      return rejectWithValue(err.response.data);
     }
     return rejectWithValue("Error fetching employee users.");
   }
@@ -166,9 +200,14 @@ const userSlice = createSlice({
       }
     },
     clearStatus: (state) => {
+      state.user = null;
       state.loginStatus = null;
       state.passwordChangeStatus = null;
+      state.employeeUsers = [];
       state.employeeUsersStatus = null;
+      state.employeeUser = null;
+      state.employeeUserStatus = null;
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
@@ -194,7 +233,7 @@ const userSlice = createSlice({
         login.rejected,
         (state, action: PayloadAction<string | undefined>) => {
           state.loginStatus = "failed";
-          state.error = (action.payload as string) ?? "Unknown error";
+          state.error = JSON.stringify(action.payload) ?? "Unknown error";
         }
       );
 
@@ -211,7 +250,7 @@ const userSlice = createSlice({
         changeUserPassword.rejected,
         (state, action: PayloadAction<string | undefined>) => {
           state.passwordChangeStatus = "failed";
-          state.error = (action.payload as string) ?? "Unknown error";
+          state.error = JSON.stringify(action.payload) ?? "Unknown error";
         }
       );
 
@@ -223,7 +262,7 @@ const userSlice = createSlice({
       })
       .addCase(
         getAllEmployeeUsers.fulfilled,
-        (state, action: PayloadAction<IUser[]>) => {
+        (state, action: PayloadAction<EmployeeUser[]>) => {
           state.employeeUsersStatus = "succeeded";
           state.employeeUsers = action.payload;
         }
@@ -232,7 +271,28 @@ const userSlice = createSlice({
         getAllEmployeeUsers.rejected,
         (state, action: PayloadAction<string | undefined>) => {
           state.employeeUsersStatus = "failed";
-          state.error = action.payload ?? "Unknown error";
+          state.error = JSON.stringify(action.payload) ?? "Unknown error";
+        }
+      );
+
+    // Handle getAllEmployeeUsers actions
+    builder
+      .addCase(getEmployeeUserById.pending, (state) => {
+        state.employeeUserStatus = "loading";
+        state.error = null;
+      })
+      .addCase(
+        getEmployeeUserById.fulfilled,
+        (state, action: PayloadAction<EmployeeUser>) => {
+          state.employeeUserStatus = "succeeded";
+          state.employeeUser = action.payload;
+        }
+      )
+      .addCase(
+        getEmployeeUserById.rejected,
+        (state, action: PayloadAction<string | undefined>) => {
+          state.employeeUsersStatus = "failed";
+          state.error = JSON.stringify(action.payload) ?? "Unknown error";
         }
       );
   },

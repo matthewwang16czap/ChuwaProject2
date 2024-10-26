@@ -36,7 +36,7 @@ export const fetchDocument = createAsyncThunk<
       return response.data;
     } catch (err: unknown) {
       if (err instanceof AxiosError && err.response) {
-        return rejectWithValue(err.response.data.message);
+        return rejectWithValue(err.response.data);
       }
       return rejectWithValue("Error fetching employee users.");
     }
@@ -63,7 +63,7 @@ const documentSlice = createSlice({
         fetchDocument.rejected,
         (state, action: PayloadAction<string | undefined>) => {
           state.status = "failed";
-          state.error = (action.payload as string) ?? "Unknown error";
+          state.error = JSON.stringify(action.payload) ?? "Unknown error";
         }
       );
   },

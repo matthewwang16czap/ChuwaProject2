@@ -2,11 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  getAllEmployeesThunk,
-  searchEmployeesByNameThunk,
-  Employee
-} from '../../features/employee/employeeSlice';
+import { EmployeeUser, getAllEmployeeUsers } from '../../features/user/userSlice';
 import { RootState, AppDispatch } from '../../app/store';
 import { debounce } from 'lodash';
 import { Input, Table, Typography, Alert, Spin, Modal } from 'antd';
@@ -19,8 +15,8 @@ const EmployeeProfilesPage: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
 
   // Selectors to access employee data and state
-  const { employees, status, error } = useSelector(
-    (state: RootState) => state.employee
+  const { employeeUsers, employeeUsersStatus, error } = useSelector(
+    (state: RootState) => state.user
   );
 
   // Local state for search query
@@ -28,11 +24,11 @@ const EmployeeProfilesPage: React.FC = () => {
 
   // State for Modal
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   useEffect(() => {
     // Fetch all employees on component mount
-    dispatch(getAllEmployeesThunk());
+    dispatch(getAllEmployeeUsers({}));
   }, [dispatch]);
 
   // Debounced search function to reduce API calls
@@ -40,14 +36,12 @@ const EmployeeProfilesPage: React.FC = () => {
     debounce((query: string) => {
       if (query.trim() === '') {
         // If search query is empty, fetch all employees
-        dispatch(getAllEmployeesThunk());
+        dispatch(getAllEmployeeUsers({}));
       } else {
         // Otherwise, perform search
         dispatch(
-          searchEmployeesByNameThunk({
-            firstName: query,
-            lastName: query,
-            preferredName: query,
+          getAllEmployeeUsers({
+            name: query
           })
         );
       }
@@ -63,21 +57,21 @@ const EmployeeProfilesPage: React.FC = () => {
   };
 
   // Handle clicking on employee name
-  const handleNameClick = (employeeId: string) => {
-    setSelectedEmployeeId(employeeId);
+  const handleNameClick = (userId: string) => {
+    setSelectedUserId(userId);
     setIsModalVisible(true);
   };
 
   // Handle closing the modal
   const handleModalClose = () => {
     setIsModalVisible(false);
-    setSelectedEmployeeId(null);
+    setSelectedUserId(null);
   };
 
   // Prepare data for the table
-  const tableData = employees
-    ? [...employees].sort((a, b) =>
-        a.lastName.localeCompare(b.lastName, undefined, { sensitivity: 'base' })
+  const tableData = employeeUsers
+    ? [...employeeUsers].sort((a, b) =>
+        a.employeeId.lastName.localeCompare(b.employeeId.lastName, undefined, { sensitivity: 'base' })
       )
     : [];
 
@@ -87,16 +81,16 @@ const EmployeeProfilesPage: React.FC = () => {
       title: 'Name',
       dataIndex: 'fullName',
       key: 'name',
-      render: (_: any, record: Employee) => (
+      render: (_: unknown, record: EmployeeUser) => (
         <a
           onClick={() => handleNameClick(record._id)}
           className="text-blue-500 hover:underline cursor-pointer"
         >
-          {`${record.firstName} ${record.middleName || ''} ${record.lastName}`.trim()}
+          {`${record.employeeId.firstName} ${record.employeeId.lastName}`.trim()}
         </a>
       ),
-      sorter: (a: Employee, b: Employee) =>
-        a.lastName.localeCompare(b.lastName, undefined, { sensitivity: 'base' }),
+      sorter: (a: EmployeeUser, b: EmployeeUser) =>
+        a.employeeId.lastName.localeCompare(b.employeeId.lastName, undefined, { sensitivity: 'base' }),
     },
     {
       title: 'SSN',
@@ -108,10 +102,10 @@ const EmployeeProfilesPage: React.FC = () => {
       title: 'Work Authorization Title',
       dataIndex: 'workAuthorizationTitle',
       key: 'workAuthorizationTitle',
-      render: (_: any, record: Employee) => {
+      render: (_: unknown, record: EmployeeUser) => {
         const title =
-          record.workAuthorization?.visaType ||
-          record.citizenship ||
+          record.employeeId.employment.visaType ||
+          record.employeeId.citizenship ||
           'N/A';
         return title;
       },
@@ -120,8 +114,8 @@ const EmployeeProfilesPage: React.FC = () => {
       title: 'Phone Number',
       dataIndex: 'phoneNumber',
       key: 'phoneNumber',
-      render: (_: any, record: Employee) =>
-        formatPhoneNumber(record.cellPhone || record.workPhone || ''),
+      render: (_: unknown, record: EmployeeUser) =>
+        formatPhoneNumber(record.employeeId.contactInfo.cellPhone || record.employeeId.contactInfo.workPhone || ''),
     },
     {
       title: 'Email',
@@ -162,23 +156,23 @@ const EmployeeProfilesPage: React.FC = () => {
       </div>
 
       {/* Summary Statistics */}
-      {employees && (
+      {employeeUsers && (
         <div className="mb-4">
           <Title level={4}>
-            Total Employees: <span className="text-blue-600">{employees.length}</span>
+            Total Employees: <span className="text-blue-600">{employeeUsers.length}</span>
           </Title>
         </div>
       )}
 
       {/* Loading Indicator */}
-      {status === 'loading' && (
+      {employeeUsersStatus === 'loading' && (
         <div className="flex justify-center items-center my-10">
           <Spin size="large" />
         </div>
       )}
 
       {/* Error Alert */}
-      {status === 'failed' && error && (
+      {employeeUsersStatus === 'failed' && error && (
         <Alert
           message="Error"
           description={error}
@@ -189,7 +183,7 @@ const EmployeeProfilesPage: React.FC = () => {
       )}
 
       {/* No Records Found */}
-      {status === 'succeeded' && employees && employees.length === 0 && (
+      {employeeUsersStatus === 'succeeded' && employeeUsers && employeeUsers.length === 0 && (
         <Alert
           message="No Records Found"
           description="No employees match your search criteria."
@@ -200,7 +194,7 @@ const EmployeeProfilesPage: React.FC = () => {
       )}
 
       {/* Employee Table */}
-      {status === 'succeeded' && employees && employees.length > 0 && (
+      {employeeUsersStatus === 'succeeded' && employeeUsers && employeeUsers.length > 0 && (
         <Table
           dataSource={tableData}
           columns={columns}
@@ -219,8 +213,8 @@ const EmployeeProfilesPage: React.FC = () => {
         width={800}
         destroyOnClose
       >
-        {selectedEmployeeId && (
-          <EmployeeProfilePage employeeId={selectedEmployeeId} />
+        {selectedUserId && (
+          <EmployeeProfilePage userId={selectedUserId} />
         )}
       </Modal>
     </div>

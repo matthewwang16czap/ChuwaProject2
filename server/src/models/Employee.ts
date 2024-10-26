@@ -25,40 +25,40 @@ interface IEmployee extends Document {
   email: string;
   firstName: string;
   lastName: string;
-  middleName?: string;
-  preferredName?: string;
+  middleName: string;
+  preferredName: string;
   ssn: string;
   dateOfBirth: Date | null;
   gender: "Male" | "Female" | "Other";
-  citizenship?: "GreenCard" | "Citizen" | "WorkAuthorization";
-  address?: {
+  citizenship: "GreenCard" | "Citizen" | "WorkAuthorization";
+  address: {
     building: string;
     street: string;
     city: string;
     state: string;
     zip: string;
   };
-  contactInfo?: {
+  contactInfo: {
     cellPhone: string;
-    workPhone?: string;
+    workPhone: string;
   };
-  employment?: {
+  employment: {
     visaType: string;
     visaTitle: string;
     startDate: Date;
-    endDate?: Date | null;
+    endDate: Date | null;
   };
-  emergencyContact?: {
+  emergencyContact: {
     firstName: string;
     lastName: string;
-    middleName?: string;
+    middleName: string;
     phone: string;
     email: string;
     relationship: string;
   };
-  documents?: {
-    profilePictureUrl?: string;
-    driverLicenseUrl?: string;
+  documents: {
+    profilePictureUrl: string;
+    driverLicenseUrl: string;
   };
 }
 
@@ -97,47 +97,22 @@ const EmployeeSchema: Schema = new Schema({
     default: "WorkAuthorization",
   },
   address: {
-    type: {
-      building: { type: String, default: "" },
-      street: { type: String, default: "" },
-      city: { type: String, default: "" },
-      state: { type: String, default: "" },
-      zip: { type: String, default: "" },
-    },
-    set: function (value: any) {
-      // Ensure the address is an object and contains the required fields
-      if (
-        typeof value !== "object" ||
-        !value.building ||
-        !value.street ||
-        !value.city ||
-        !value.state ||
-        !value.zip
-      ) {
-        throw new Error("Invalid address format.");
-      }
-      return value;
-    },
+    building: { type: String, default: "" },
+    street: { type: String, default: "" },
+    city: { type: String, default: "" },
+    state: { type: String, default: "" },
+    zip: { type: String, default: "" },
   },
   contactInfo: {
-    type: {
-      cellPhone: {
-        type: String,
-        default: "",
-        validate: phoneValidator, // Add phone number validation
-      },
-      workPhone: {
-        type: String,
-        default: "",
-        validate: phoneValidator, // Add phone number validation
-      },
+    cellPhone: {
+      type: String,
+      default: "",
+      validate: phoneValidator, // Add phone number validation
     },
-    set: function (value: any) {
-      // Ensure contactInfo is an object and contains at least cellPhone and workPhone
-      if (typeof value !== "object" || !value.cellPhone || !value.workPhone) {
-        throw new Error("Invalid contactInfo format.");
-      }
-      return value;
+    workPhone: {
+      type: String,
+      default: "",
+      validate: phoneValidator, // Add phone number validation
     },
   },
   employment: {
@@ -151,36 +126,20 @@ const EmployeeSchema: Schema = new Schema({
     endDate: { type: Date, default: null },
   },
   emergencyContact: {
-    type: {
-      firstName: { type: String, default: "" },
-      lastName: { type: String, default: "" },
-      middleName: { type: String, default: "" },
-      phone: {
-        type: String,
-        default: "",
-        validate: phoneValidator, // Use the external phone validator
-      },
-      email: {
-        type: String,
-        default: "",
-        validate: emailValidator, // Use the external email validator
-      },
-      relationship: { type: String, default: "" },
+    firstName: { type: String, default: "" },
+    lastName: { type: String, default: "" },
+    middleName: { type: String, default: "" },
+    phone: {
+      type: String,
+      default: "",
+      validate: phoneValidator, // Use the external phone validator
     },
-    set: function (value: any) {
-      // Ensure contactInfo is an object and contains at least cellPhone and workPhone
-      if (
-        typeof value !== "object" ||
-        value.firstName == null ||
-        value.lastName == null ||
-        value.phone == null ||
-        value.email == null ||
-        value.relationship == null
-      ) {
-        throw new Error("Invalid emergencyContact format.");
-      }
-      return value;
+    email: {
+      type: String,
+      default: "",
+      validate: emailValidator, // Use the external email validator
     },
+    relationship: { type: String, default: "" },
   },
   documents: {
     profilePictureUrl: { type: String, default: "" },

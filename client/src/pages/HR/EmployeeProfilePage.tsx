@@ -1,96 +1,27 @@
 // EmployeeProfilePage.tsx
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Spin, Typography, Alert, Divider } from 'antd';
-import axiosInstance from '../../api/axiosInstance'; // Adjust the path as needed
-import axios from 'axios';
-// import moment from 'moment'; // Ensure moment is installed: npm install moment
+import { getEmployeeUserById } from '../../features/user/userSlice';
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "../../app/store";
 
 const { Title, Paragraph } = Typography;
 
-interface EmployeeProfilePageProps {
-  employeeId: string;
-}
+const EmployeeProfilePage: React.FC<{userId: string}> = ({ userId }) => {
+  const dispatch: AppDispatch = useDispatch();
 
-interface Employee {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  middleName?: string;
-  preferredName?: string;
-  email?: string;
-  ssn?: string;
-  cellPhone?: string;
-  workPhone?: string;
-  citizenship?: string;
-  workAuthorization?: {
-    visaType?: string;
-    visaTitle?: string;
-    startDate?: string;
-    endDate?: string;
-    documents?: Array<{
-      name?: string;
-      url?: string;
-    }>;
-  };
-  address?: {
-    building?: string;
-    street?: string;
-    city?: string;
-    state?: string;
-    zip?: string;
-  };
-  reference?: {
-    firstName?: string;
-    lastName?: string;
-    phone?: string;
-    email?: string;
-    relationship?: string;
-  };
-  emergencyContacts?: Array<{
-    firstName?: string;
-    lastName?: string;
-    phone?: string;
-    email?: string;
-    relationship?: string;
-  }>;
-  documents?: {
-    driversLicenseUrl?: string;
-  };
-  [key: string]: unknown;
-}
-
-const EmployeeProfilePage: React.FC<EmployeeProfilePageProps> = ({ employeeId }) => {
-  const [employee, setEmployee] = useState<Employee | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    employeeUser,
+    employeeUserStatus,
+    error,
+  } = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
-    const fetchEmployee = async () => {
-      try {
-        setLoading(true);
-        const response = await axiosInstance.get<{
-          message: string;
-          employee: Employee;
-        }>(`/api/employee/${employeeId}`);
-        setEmployee(response.data.employee);
-        setLoading(false);
-      } catch (err: unknown) {
-        setLoading(false);
-        if (axios.isAxiosError(err)) {
-          setError(err.response?.data?.message || 'Failed to load employee profile.');
-        } else {
-          setError('An unexpected error occurred.');
-        }
-      }
-    };
+    dispatch(getEmployeeUserById({userId}))
+  }, [userId, dispatch]);
 
-    if (employeeId) {
-      fetchEmployee();
-    }
-  }, [employeeId]);
-
-  if (loading) {
+  if (employeeUserStatus === "loading") {
     return (
       <div className="flex justify-center items-center my-10">
         <Spin size="large" />
@@ -109,7 +40,7 @@ const EmployeeProfilePage: React.FC<EmployeeProfilePageProps> = ({ employeeId })
     );
   }
 
-  if (!employee) {
+  if (!employeeUser) {
     return (
       <Alert
         message="No Data"
@@ -144,28 +75,28 @@ const EmployeeProfilePage: React.FC<EmployeeProfilePageProps> = ({ employeeId })
   return (
     <div className="p-4">
       <Title level={3}>
-        {employee.preferredName
-          ? `${employee.firstName} "${employee.preferredName}" ${employee.lastName}`
-          : `${employee.firstName} ${employee.lastName}`}
+        {employeeUser.employeeId.preferredName
+          ? `${employeeUser.employeeId.firstName} "${employeeUser.employeeId.preferredName}" ${employeeUser.employeeId.lastName}`
+          : `${employeeUser.employeeId.firstName} ${employeeUser.employeeId.lastName}`}
       </Title>
       <Divider />
       <Paragraph>
-        <strong>Email:</strong> {employee.email || 'N/A'}
+        <strong>Email:</strong> {employeeUser.email || 'N/A'}
       </Paragraph>
       <Paragraph>
         <strong>Phone Number:</strong>{' '}
-        {employee.cellPhone
-          ? formatPhoneNumber(employee.cellPhone)
-          : employee.workPhone
-          ? formatPhoneNumber(employee.workPhone)
+        {employeeUser.employeeId.contactInfo.cellPhone
+          ? formatPhoneNumber(employeeUser.employeeId.contactInfo.cellPhone)
+          : employeeUser.employeeId.contactInfo.workPhone
+          ? formatPhoneNumber(employeeUser.employeeId.contactInfo.workPhone)
           : 'N/A'}
       </Paragraph>
       <Paragraph>
-        <strong>SSN:</strong> {employee.ssn ? maskSSN(employee.ssn) : 'N/A'}
+        <strong>SSN:</strong> {employeeUser.employeeId.ssn ? maskSSN(employeeUser.employeeId.ssn) : 'N/A'}
       </Paragraph>
       <Paragraph>
         <strong>Work Authorization Title:</strong>{' '}
-        {employee.workAuthorization?.visaType || employee.citizenship || 'N/A'}
+        {employeeUser.employeeId.employment.visaType || 'N/A'}
       </Paragraph>
       {/* Add more fields as necessary */}
       {/* Address, Work Authorization Details, Reference, Emergency Contacts, Driver’s License */}
