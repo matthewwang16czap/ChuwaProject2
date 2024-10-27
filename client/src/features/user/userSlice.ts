@@ -24,6 +24,7 @@ interface UserState {
   employeeUsersStatus: "loading" | "succeeded" | "failed" | null;
   employeeUser: EmployeeUser | null;
   employeeUserStatus: "loading" | "succeeded" | "failed" | null;
+  sendNotificationStatus: "loading" | "succeeded" | "failed" | null;
   error: string | null;
 }
 
@@ -88,6 +89,7 @@ const initialState: UserState = {
   employeeUsersStatus: null,
   employeeUser: null,
   employeeUserStatus: null,
+  sendNotificationStatus: null,
   error: null,
 };
 
@@ -181,6 +183,24 @@ export const getEmployeeUserById = createAsyncThunk<
   }
 });
 
+// Define the AsyncThunk for fetching all employee users
+export const sendNotification = createAsyncThunk<
+  void, // Return type
+  { email: string; subject: string; text: string }, // Payload type (search parameters)
+  { rejectValue: string } // Rejection error type
+>("user/sendNotification", async (payload, { rejectWithValue }) => {
+  try {
+    await axiosInstance.post(`${API_URL}/sendnotification`, {
+      payload,
+    });
+  } catch (err: unknown) {
+    if (err instanceof AxiosError && err.response) {
+      return rejectWithValue(err.response.data);
+    }
+    return rejectWithValue("Error send notification");
+  }
+});
+
 const userSlice = createSlice({
   name: "user",
   initialState,
@@ -207,6 +227,7 @@ const userSlice = createSlice({
       state.employeeUsersStatus = null;
       state.employeeUser = null;
       state.employeeUserStatus = null;
+      state.sendNotificationStatus = null;
       state.error = null;
     },
   },
@@ -292,6 +313,23 @@ const userSlice = createSlice({
         getEmployeeUserById.rejected,
         (state, action: PayloadAction<string | undefined>) => {
           state.employeeUsersStatus = "failed";
+          state.error = JSON.stringify(action.payload) ?? "Unknown error";
+        }
+      );
+
+    // Handle sendNotification actions
+    builder
+      .addCase(sendNotification.pending, (state) => {
+        state.sendNotificationStatus = "loading";
+        state.error = null;
+      })
+      .addCase(sendNotification.fulfilled, (state) => {
+        state.passwordChangeStatus = "succeeded";
+      })
+      .addCase(
+        sendNotification.rejected,
+        (state, action: PayloadAction<string | undefined>) => {
+          state.passwordChangeStatus = "failed";
           state.error = JSON.stringify(action.payload) ?? "Unknown error";
         }
       );

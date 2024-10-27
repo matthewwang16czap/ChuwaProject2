@@ -5,24 +5,21 @@ import { useDispatch, useSelector } from 'react-redux';
 import { EmployeeUser, getAllEmployeeUsers } from '../../features/user/userSlice';
 import { RootState, AppDispatch } from '../../app/store';
 import { debounce } from 'lodash';
-import { Input, Table, Typography, Alert, Spin, Modal } from 'antd';
+import { Input, Table, Typography, Alert, Spin, Modal, Select } from 'antd';
 import EmployeeProfilePage from './EmployeeProfilePage'; // Updated to accept props
 
 const { Title } = Typography;
 const { Search } = Input;
+const { Option } = Select;
 
 const EmployeeProfilesPage: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
-
-  // Selectors to access employee data and state
   const { employeeUsers, employeeUsersStatus, error } = useSelector(
     (state: RootState) => state.user
   );
-
-  // Local state for search query
   const [searchQuery, setSearchQuery] = useState<string>('');
-
-  // State for Modal
+  const [nextStepPrimary, setNextStepPrimary] = useState<string | undefined>(undefined);
+  const [nextStepSecondary, setNextStepSecondary] = useState<string | undefined>(undefined);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
@@ -31,34 +28,34 @@ const EmployeeProfilesPage: React.FC = () => {
     dispatch(getAllEmployeeUsers({}));
   }, [dispatch]);
 
-  useEffect(() => {
-    // Fetch all employees on component mount
-    console.log(employeeUsers);
-  });
-
   // Debounced search function to reduce API calls
   const debouncedSearch = useCallback(
-    debounce((query: string) => {
-      if (query.trim() === '') {
-        // If search query is empty, fetch all employees
-        dispatch(getAllEmployeeUsers({}));
-      } else {
-        // Otherwise, perform search
-        dispatch(
-          getAllEmployeeUsers({
-            name: query
-          })
-        );
-      }
+    debounce((query: string, primary: string | undefined, secondary: string | undefined) => {
+      const combinedNextStep = [primary, secondary].filter(Boolean).join('');
+      dispatch(
+        getAllEmployeeUsers({
+          name: query,
+          nextStep: combinedNextStep || undefined,
+        })
+      );
     }, 300),
     [dispatch]
-  ); // 300ms debounce
+  );
 
-  // Handle search input changes
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    debouncedSearch(query);
+    debouncedSearch(query, nextStepPrimary, nextStepSecondary);
+  };
+
+  const handlePrimaryChange = (value: string) => {
+    setNextStepPrimary(value);
+    debouncedSearch(searchQuery, value, nextStepSecondary);
+  };
+
+  const handleSecondaryChange = (value: string) => {
+    setNextStepSecondary(value);
+    debouncedSearch(searchQuery, nextStepPrimary, value);
   };
 
   // Handle clicking on employee name
@@ -127,6 +124,11 @@ const EmployeeProfilesPage: React.FC = () => {
       dataIndex: 'email',
       key: 'email',
     },
+    {
+      title: 'nextStep',
+      dataIndex: 'nextStep',
+      key: 'nextStep',
+    },
   ];
 
   // Helper function to mask SSN
@@ -158,6 +160,38 @@ const EmployeeProfilesPage: React.FC = () => {
           enterButton
           allowClear
         />
+      </div>
+
+       {/* Next Step Primary Filter */}
+       <div className="mb-4">
+        <Select
+          placeholder="Filter by Primary Next Step"
+          onChange={handlePrimaryChange}
+          allowClear
+          style={{ width: '100%' }}
+        >
+          {['Submit', 'WaitReview', 'Resubmit'].map(step => (
+            <Option key={step} value={step}>
+              {step}
+            </Option>
+          ))}
+        </Select>
+      </div>
+
+      {/* Next Step Secondary Filter */}
+      <div className="mb-4">
+        <Select
+          placeholder="Filter by Secondary Next Step"
+          onChange={handleSecondaryChange}
+          allowClear
+          style={{ width: '100%' }}
+        >
+          {['OPTReceipt', 'OPTEAD', 'I983', 'I20'].map(step => (
+            <Option key={step} value={step}>
+              {step}
+            </Option>
+          ))}
+        </Select>
       </div>
 
       {/* Summary Statistics */}
