@@ -40,6 +40,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             key: '/personalInfo',
             label: <Link to="/personalInfo">Personal Info</Link>,
           },
+          {
+            key: '/visa',
+            label: <Link to="/visa">Visa Status Management page</Link>,
+          },
           // Add more Employee-specific menu items here
         ]
       : []),
@@ -56,6 +60,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           {
             key: '/send-invitation',
             label: <Link to="/send-invitation">Send Invitation</Link>,
+          },
+          {
+            key: '/visareview',
+            label: <Link to="/visareview">Visa Status Management page</Link>,
           },
           // Add more HR-specific menu items here
         ]

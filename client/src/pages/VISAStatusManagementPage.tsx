@@ -1,6 +1,6 @@
 // VISAStatusManagementPage.tsx
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../app/store';
 import {
@@ -13,14 +13,17 @@ import { DownloadOutlined } from '@ant-design/icons';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import { useForm, UseFormReturn } from 'react-hook-form';
-import PrototypeForm, { Field } from '../forms/PrototypeForm';
+import { useForm } from 'react-hook-form';
+import PrototypeForm from '../forms/PrototypeForm';
 
 // Set up PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.js',
   import.meta.url
 ).toString();
+
+// Define the allowed documents in order
+const allowedDocuments = ['OPTReceipt', 'OPTEAD', 'I-983', 'I-20'];
 
 const VISAStatusManagementPage: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -70,8 +73,13 @@ const VISAStatusManagementPage: React.FC = () => {
     fetchApplication();
   }, [dispatch]);
 
-  const documentsInOrder = ['OPTReceipt', 'OPTEAD', 'I-983', 'I-20'];
+  // Determine if the user should see the Visa Status Management page
+  const isApplicable =
+    application &&
+    application.citizenship === 'WorkAuthorization' &&
+    application.workAuthorization?.visaType === 'F1(CPT/OPT)';
 
+  // Function to get document status by name
   const getDocumentStatus = (docName: string) => {
     const doc = application?.workAuthorization?.documents?.find(
       (d) => d.name === docName
@@ -89,11 +97,12 @@ const VISAStatusManagementPage: React.FC = () => {
     }
   };
 
+  // Get statuses for all documents
   const getDocumentStatuses = () => {
     const statuses: {
       [key: string]: { status: string; feedback?: string; url?: string };
     } = {};
-    documentsInOrder.forEach((docName) => {
+    allowedDocuments.forEach((docName) => {
       const docStatus = getDocumentStatus(docName);
       statuses[docName] = docStatus;
     });
@@ -103,7 +112,10 @@ const VISAStatusManagementPage: React.FC = () => {
   const documentStatuses = getDocumentStatuses();
 
   // Submission handlers
-  const handleUploadSubmit = async (documentName: string, fileUrl: string) => {
+  const handleUploadSubmit = async (
+    documentName: string,
+    fileUrl: string
+  ) => {
     try {
       if (!fileUrl) {
         message.error('File upload failed');
@@ -115,6 +127,7 @@ const VISAStatusManagementPage: React.FC = () => {
         name: documentName,
         url: fileUrl,
         status: 'Pending',
+        feedback: '',
       };
 
       const updatedDocuments = [
@@ -158,6 +171,7 @@ const VISAStatusManagementPage: React.FC = () => {
     await handleUploadSubmit('I-20', data.file);
   };
 
+  // Handler to view document
   const handleViewDocument = async (url: string, documentName: string) => {
     try {
       // Remove leading slash if present
@@ -169,25 +183,27 @@ const VISAStatusManagementPage: React.FC = () => {
       const filename = urlParts.slice(2).join('/');
 
       // Fetch the document Blob
-      const blob = await dispatch(fetchDocument({ userId, filename })).unwrap();
+      const blob = await dispatch(
+        fetchDocument({ userId, filename })
+      ).unwrap();
 
       // Set the Blob in local state
       setDocumentBlob(blob);
 
       // Determine file type
       const extension = filename.split('.').pop()?.toLowerCase();
-      let fileType = '';
+      let determinedFileType = '';
       if (extension === 'pdf') {
-        fileType = 'application/pdf';
+        determinedFileType = 'application/pdf';
       } else if (
         ['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(extension || '')
       ) {
-        fileType = 'image/' + extension;
+        determinedFileType = 'image/' + extension;
       } else {
-        fileType = 'unknown';
+        determinedFileType = 'unknown';
       }
 
-      setFileType(fileType);
+      setFileType(determinedFileType);
       setIsModalVisible(true);
     } catch (error) {
       console.error('Error fetching document:', error);
@@ -199,14 +215,15 @@ const VISAStatusManagementPage: React.FC = () => {
     setNumPages(numPages);
   };
 
+  // Render functions for each document
   const renderOPTReceiptSection = () => {
     const { status, feedback, url } = documentStatuses['OPTReceipt'];
 
     if (status === 'Pending') {
       return (
-        <div>
-          <h3>OPTReceipt</h3>
-          <p>Waiting for HR to approve your OPTReceipt.</p>
+        <div style={{ marginBottom: '40px' }}>
+          <h3>OPT Receipt</h3>
+          <p>Waiting for HR to approve your OPT Receipt.</p>
           {url && (
             <Button
               onClick={() => handleViewDocument(url, 'OPTReceipt')}
@@ -218,29 +235,63 @@ const VISAStatusManagementPage: React.FC = () => {
         </div>
       );
     } else if (status === 'Approved') {
-      return null; // Proceed to next document
-    } else if (status === 'Rejected' || status === 'Not Uploaded') {
       return (
-        <div>
-          <h3>OPTReceipt</h3>
-          {status === 'Rejected' && (
-            <>
-              <p>Your OPTReceipt was rejected.</p>
-              {feedback && <p>Feedback from HR: {feedback}</p>}
-            </>
-          )}
-          {status === 'Not Uploaded' && (
-            <p>Your OPTReceipt was not uploaded during onboarding.</p>
-          )}
-          <p>Please upload your OPTReceipt.</p>
+        <div style={{ marginBottom: '40px' }}>
+          <h3>OPT Receipt</h3>
+          <p>Please upload a copy of your OPT EAD.</p>
           <PrototypeForm
             fields={[
               {
                 name: 'file',
-                label: `Upload OPTReceipt`,
+                label: 'Upload OPT EAD',
                 type: 'upload',
                 validation: { required: 'File is required' },
-                filename: `OPTReceipt.pdf`,
+                filename: 'OPTEAD.pdf',
+              },
+            ]}
+            onSubmit={handleOPTEADSubmit}
+            methods={optEADFormMethods}
+            submitButtonLabel="Upload"
+          />
+        </div>
+      );
+    } else if (status === 'Rejected') {
+      return (
+        <div style={{ marginBottom: '40px' }}>
+          <h3>OPT Receipt</h3>
+          <p>Your OPT Receipt was rejected.</p>
+          {feedback && <p>Feedback from HR: {feedback}</p>}
+          <p>Please re-upload your OPT Receipt.</p>
+          <PrototypeForm
+            fields={[
+              {
+                name: 'file',
+                label: 'Re-upload OPT Receipt',
+                type: 'upload',
+                validation: { required: 'File is required' },
+                filename: 'OPTReceipt.pdf',
+              },
+            ]}
+            onSubmit={handleOPTReceiptSubmit}
+            methods={optReceiptFormMethods}
+            submitButtonLabel="Upload"
+          />
+        </div>
+      );
+    } else if (status === 'Not Uploaded') {
+      return (
+        <div style={{ marginBottom: '40px' }}>
+          <h3>OPT Receipt</h3>
+          <p>Your OPT Receipt was not uploaded during onboarding.</p>
+          <p>Please upload your OPT Receipt.</p>
+          <PrototypeForm
+            fields={[
+              {
+                name: 'file',
+                label: 'Upload OPT Receipt',
+                type: 'upload',
+                validation: { required: 'File is required' },
+                filename: 'OPTReceipt.pdf',
               },
             ]}
             onSubmit={handleOPTReceiptSubmit}
@@ -250,22 +301,24 @@ const VISAStatusManagementPage: React.FC = () => {
         </div>
       );
     }
+
+    return null;
   };
 
-  // Similar render functions for other documents...
   const renderOPTEADSection = () => {
     const { status, feedback, url } = documentStatuses['OPTEAD'];
-    const previousDocStatus = documentStatuses['OPTReceipt'].status;
+    const prevDocStatus = documentStatuses['OPTReceipt'].status;
 
-    if (previousDocStatus !== 'Approved') {
+    // Only show if previous document is approved
+    if (prevDocStatus !== 'Approved') {
       return null;
     }
 
     if (status === 'Pending') {
       return (
-        <div>
-          <h3>OPTEAD</h3>
-          <p>Waiting for HR to approve your OPTEAD.</p>
+        <div style={{ marginBottom: '40px' }}>
+          <h3>OPT EAD</h3>
+          <p>Waiting for HR to approve your OPT EAD.</p>
           {url && (
             <Button
               onClick={() => handleViewDocument(url, 'OPTEAD')}
@@ -277,26 +330,80 @@ const VISAStatusManagementPage: React.FC = () => {
         </div>
       );
     } else if (status === 'Approved') {
-      return null; // Proceed to next document
-    } else if (status === 'Rejected' || status === 'Not Uploaded') {
       return (
-        <div>
-          <h3>OPTEAD</h3>
-          {status === 'Rejected' && (
-            <>
-              <p>Your OPTEAD was rejected.</p>
-              {feedback && <p>Feedback from HR: {feedback}</p>}
-            </>
-          )}
-          {status === 'Not Uploaded' && <p>Please upload your OPTEAD.</p>}
+        <div style={{ marginBottom: '40px' }}>
+          <h3>OPT EAD</h3>
+          <p>Please download and fill out the I-983 form.</p>
+          <div style={{ marginBottom: '20px' }}>
+            <Button
+              icon={<DownloadOutlined />}
+              href="/templates/I-983_Empty_Template.pdf"
+              target="_blank"
+              style={{ marginRight: '10px' }}
+            >
+              Download Empty Template
+            </Button>
+            <Button
+              icon={<DownloadOutlined />}
+              href="/templates/I-983_Sample_Template.pdf"
+              target="_blank"
+            >
+              Download Sample Template
+            </Button>
+          </div>
           <PrototypeForm
             fields={[
               {
                 name: 'file',
-                label: `Upload OPTEAD`,
+                label: 'Upload Filled I-983 Form',
                 type: 'upload',
                 validation: { required: 'File is required' },
-                filename: `OPTEAD.pdf`,
+                filename: 'I-983.pdf',
+              },
+            ]}
+            onSubmit={handleI983Submit}
+            methods={i983FormMethods}
+            submitButtonLabel="Upload"
+          />
+        </div>
+      );
+    } else if (status === 'Rejected') {
+      return (
+        <div style={{ marginBottom: '40px' }}>
+          <h3>OPT EAD</h3>
+          <p>Your OPT EAD was rejected.</p>
+          {feedback && <p>Feedback from HR: {feedback}</p>}
+          <p>Please re-upload your OPT EAD.</p>
+          <PrototypeForm
+            fields={[
+              {
+                name: 'file',
+                label: 'Re-upload OPT EAD',
+                type: 'upload',
+                validation: { required: 'File is required' },
+                filename: 'OPTEAD.pdf',
+              },
+            ]}
+            onSubmit={handleOPTEADSubmit}
+            methods={optEADFormMethods}
+            submitButtonLabel="Upload"
+          />
+        </div>
+      );
+    } else if (status === 'Not Uploaded') {
+      return (
+        <div style={{ marginBottom: '40px' }}>
+          <h3>OPT EAD</h3>
+          <p>Your OPT EAD was not uploaded during onboarding.</p>
+          <p>Please upload your OPT EAD.</p>
+          <PrototypeForm
+            fields={[
+              {
+                name: 'file',
+                label: 'Upload OPT EAD',
+                type: 'upload',
+                validation: { required: 'File is required' },
+                filename: 'OPTEAD.pdf',
               },
             ]}
             onSubmit={handleOPTEADSubmit}
@@ -306,19 +413,22 @@ const VISAStatusManagementPage: React.FC = () => {
         </div>
       );
     }
+
+    return null;
   };
 
   const renderI983Section = () => {
     const { status, feedback, url } = documentStatuses['I-983'];
-    const previousDocStatus = documentStatuses['OPTEAD'].status;
+    const prevDocStatus = documentStatuses['OPTEAD'].status;
 
-    if (previousDocStatus !== 'Approved') {
+    // Only show if previous document is approved
+    if (prevDocStatus !== 'Approved') {
       return null;
     }
 
     if (status === 'Pending') {
       return (
-        <div>
+        <div style={{ marginBottom: '40px' }}>
           <h3>I-983</h3>
           <p>Waiting for HR to approve and sign your I-983.</p>
           {url && (
@@ -333,54 +443,82 @@ const VISAStatusManagementPage: React.FC = () => {
       );
     } else if (status === 'Approved') {
       return (
-        <div>
+        <div style={{ marginBottom: '40px' }}>
           <h3>I-983</h3>
-          <p>Your I-983 has been approved.</p>
           <p>
-            Please send the I-983 along with all necessary documents to your school
-            and upload the new I-20.
+            Please send the I-983 along with all necessary documents to your school and
+            upload the new I-20.
           </p>
-        </div>
-      );
-    } else if (status === 'Rejected' || status === 'Not Uploaded') {
-      return (
-        <div>
-          <h3>I-983</h3>
-          {status === 'Rejected' && (
-            <>
-              <p>Your I-983 was rejected.</p>
-              {feedback && <p>Feedback from HR: {feedback}</p>}
-            </>
-          )}
-          {status === 'Not Uploaded' && (
-            <>
-              <p>Please download and fill out the I-983 form.</p>
-              <Button
-                icon={<DownloadOutlined />}
-                href="/templates/I-983_Empty_Template.pdf"
-                target="_blank"
-              >
-                Download Empty Template
-              </Button>
-              <Button
-                icon={<DownloadOutlined />}
-                href="/templates/I-983_Sample_Template.pdf"
-                target="_blank"
-                style={{ marginLeft: 10 }}
-              >
-                Download Sample Template
-              </Button>
-            </>
-          )}
-          <p>After filling out the form, please upload it below.</p>
           <PrototypeForm
             fields={[
               {
                 name: 'file',
-                label: `Upload I-983`,
+                label: 'Upload New I-20',
                 type: 'upload',
                 validation: { required: 'File is required' },
-                filename: `I-983.pdf`,
+                filename: 'I-20.pdf',
+              },
+            ]}
+            onSubmit={handleI20Submit}
+            methods={i20FormMethods}
+            submitButtonLabel="Upload"
+          />
+        </div>
+      );
+    } else if (status === 'Rejected') {
+      return (
+        <div style={{ marginBottom: '40px' }}>
+          <h3>I-983</h3>
+          <p>Your I-983 was rejected.</p>
+          {feedback && <p>Feedback from HR: {feedback}</p>}
+          <p>Please re-upload your I-983.</p>
+          <PrototypeForm
+            fields={[
+              {
+                name: 'file',
+                label: 'Re-upload I-983 Form',
+                type: 'upload',
+                validation: { required: 'File is required' },
+                filename: 'I-983.pdf',
+              },
+            ]}
+            onSubmit={handleI983Submit}
+            methods={i983FormMethods}
+            submitButtonLabel="Upload"
+          />
+        </div>
+      );
+    } else if (status === 'Not Uploaded') {
+      return (
+        <div style={{ marginBottom: '40px' }}>
+          <h3>I-983</h3>
+          <p>Your I-983 was not uploaded.</p>
+          <p>Please download, fill out, and upload the I-983 form.</p>
+          <div style={{ marginBottom: '20px' }}>
+            <Button
+              icon={<DownloadOutlined />}
+              href="/templates/I-983_Empty_Template.pdf"
+              target="_blank"
+              style={{ marginRight: '10px' }}
+            >
+              Download Empty Template
+            </Button>
+            <Button
+              icon={<DownloadOutlined />}
+              href="/templates/I-983_Sample_Template.pdf"
+              target="_blank"
+            >
+              Download Sample Template
+            </Button>
+          </div>
+          <PrototypeForm
+            fields={[
+              {
+                name: 'file',
+                label: 'Upload I-983 Form',
+                type: 'upload',
+                validation: { required: 'File is required' },
+                filename: 'I-983.pdf',
               },
             ]}
             onSubmit={handleI983Submit}
@@ -390,19 +528,22 @@ const VISAStatusManagementPage: React.FC = () => {
         </div>
       );
     }
+
+    return null;
   };
 
   const renderI20Section = () => {
     const { status, feedback, url } = documentStatuses['I-20'];
-    const previousDocStatus = documentStatuses['I-983'].status;
+    const prevDocStatus = documentStatuses['I-983'].status;
 
-    if (previousDocStatus !== 'Approved') {
+    // Only show if previous document is approved
+    if (prevDocStatus !== 'Approved') {
       return null;
     }
 
     if (status === 'Pending') {
       return (
-        <div>
+        <div style={{ marginBottom: '40px' }}>
           <h3>I-20</h3>
           <p>Waiting for HR to approve your I-20.</p>
           {url && (
@@ -417,30 +558,48 @@ const VISAStatusManagementPage: React.FC = () => {
       );
     } else if (status === 'Approved') {
       return (
-        <div>
+        <div style={{ marginBottom: '40px' }}>
           <h3>I-20</h3>
           <p>All documents have been approved.</p>
         </div>
       );
-    } else if (status === 'Rejected' || status === 'Not Uploaded') {
+    } else if (status === 'Rejected') {
       return (
-        <div>
+        <div style={{ marginBottom: '40px' }}>
           <h3>I-20</h3>
-          {status === 'Rejected' && (
-            <>
-              <p>Your I-20 was rejected.</p>
-              {feedback && <p>Feedback from HR: {feedback}</p>}
-            </>
-          )}
-          <p>Please upload your new I-20.</p>
+          <p>Your I-20 was rejected.</p>
+          {feedback && <p>Feedback from HR: {feedback}</p>}
+          <p>Please re-upload your I-20.</p>
           <PrototypeForm
             fields={[
               {
                 name: 'file',
-                label: `Upload I-20`,
+                label: 'Re-upload I-20',
                 type: 'upload',
                 validation: { required: 'File is required' },
-                filename: `I-20.pdf`,
+                filename: 'I-20.pdf',
+              },
+            ]}
+            onSubmit={handleI20Submit}
+            methods={i20FormMethods}
+            submitButtonLabel="Upload"
+          />
+        </div>
+      );
+    } else if (status === 'Not Uploaded') {
+      return (
+        <div style={{ marginBottom: '40px' }}>
+          <h3>I-20</h3>
+          <p>Your I-20 was not uploaded.</p>
+          <p>Please upload your I-20.</p>
+          <PrototypeForm
+            fields={[
+              {
+                name: 'file',
+                label: 'Upload I-20',
+                type: 'upload',
+                validation: { required: 'File is required' },
+                filename: 'I-20.pdf',
               },
             ]}
             onSubmit={handleI20Submit}
@@ -450,12 +609,14 @@ const VISAStatusManagementPage: React.FC = () => {
         </div>
       );
     }
+
+    return null;
   };
 
   if (loading || appStatus === 'loading') {
     return (
-      <div className="flex justify-center items-center my-10">
-        <Spin size="large" />
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <Spin size="large" tip="Loading application data..." />
       </div>
     );
   }
@@ -467,18 +628,14 @@ const VISAStatusManagementPage: React.FC = () => {
         description={appError}
         type="error"
         showIcon
-        className="mb-6"
+        style={{ margin: '20px' }}
       />
     );
   }
 
-  if (
-    !application ||
-    application.citizenship !== 'WorkAuthorization' ||
-    application.workAuthorization?.visaType !== 'F1(CPT/OPT)'
-  ) {
+  if (!isApplicable) {
     return (
-      <div>
+      <div style={{ padding: '20px' }}>
         <h2>VISA Status Management</h2>
         <p>This page is not applicable to you.</p>
       </div>
@@ -486,7 +643,7 @@ const VISAStatusManagementPage: React.FC = () => {
   }
 
   return (
-    <div>
+    <div style={{ padding: '20px' }}>
       <h2>VISA Status Management</h2>
       {renderOPTReceiptSection()}
       {renderOPTEADSection()}
@@ -495,7 +652,7 @@ const VISAStatusManagementPage: React.FC = () => {
 
       {/* Modal for Document Preview */}
       <Modal
-        open={isModalVisible}
+        visible={isModalVisible}
         footer={null}
         onCancel={() => {
           setIsModalVisible(false);
@@ -505,8 +662,8 @@ const VISAStatusManagementPage: React.FC = () => {
         width={800}
       >
         {documentState.status === 'loading' && (
-          <div className="flex justify-center items-center">
-            <Spin size="large" />
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <Spin size="large" tip="Loading document..." />
           </div>
         )}
         {documentState.status === 'failed' && (
@@ -538,7 +695,7 @@ const VISAStatusManagementPage: React.FC = () => {
             ) : fileType.startsWith('image/') ? (
               <img
                 src={URL.createObjectURL(documentBlob)}
-                alt={documentBlob.type}
+                alt={fileType}
                 style={{ width: '100%' }}
               />
             ) : (

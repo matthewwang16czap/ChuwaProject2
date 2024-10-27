@@ -16,10 +16,7 @@ import { DownloadOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../../app/store';
 import { getAllEmployeeUsers } from '../../features/user/userSlice';
-import {
-  getApplicationThunk,
-  decideDocumentThunk,
-} from '../../features/application/applicationSlice';
+import { decideDocumentThunk } from '../../features/application/applicationSlice';
 import axiosInstance from '../../api/axiosInstance';
 import moment from 'moment';
 
@@ -27,6 +24,48 @@ const { Search } = Input;
 
 // Define the allowed documents in order
 const allowedDocuments = ["OPTReceipt", "OPTEAD", "I-983", "I-20"];
+
+// Define EmployeeUser interface as per userSlice.ts
+interface EmployeeUser {
+  _id: string;
+  username: string;
+  role: string;
+  email: string;
+  employeeId: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    middleName?: string;
+    preferredName: string;
+    ssn: string;
+    dateOfBirth: string;
+    gender: string;
+    citizenship: string;
+    employment: {
+      visaType: string;
+      visaTitle: string;
+      startDate: Date;
+      endDate: Date | null;
+    };
+    contactInfo: {
+      cellPhone: string;
+      workPhone: string;
+    };
+    applicationId: {
+      _id: string;
+      workAuthorization: {
+        documents: {
+          name: string;
+          url: string;
+          feedback: string;
+          status: string;
+        }[];
+      };
+      status: string;
+    };
+  };
+  nextStep: string;
+}
 
 // Refactored DocumentViewer Component
 const DocumentViewer: React.FC<{ fileUrl: string }> = ({ fileUrl }) => {
@@ -81,11 +120,11 @@ const DocumentViewer: React.FC<{ fileUrl: string }> = ({ fileUrl }) => {
 
 const VISAStatusReviewPage: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
-  const { allEmployees, status: empStatus, error: empError } = useSelector(
-    (state: RootState) => state.employee
+  const { employeeUsers, employeeUsersStatus, error: empError } = useSelector(
+    (state: RootState) => state.user
   );
-  const [allApplications, setAllApplications] = useState<any[]>([]);
-  const [filteredApplications, setFilteredApplications] = useState<any[]>([]);
+  const [allApplications, setAllApplications] = useState<EmployeeUser[]>([]);
+  const [filteredApplications, setFilteredApplications] = useState<EmployeeUser[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   // State for Document Preview Modal
@@ -94,17 +133,17 @@ const VISAStatusReviewPage: React.FC = () => {
 
   // State for Document Approval Modal
   const [isApprovalModalVisible, setIsApprovalModalVisible] = useState<boolean>(false);
-  const [currentApp, setCurrentApp] = useState<any>(null);
+  const [currentApp, setCurrentApp] = useState<EmployeeUser | null>(null);
   const [currentDoc, setCurrentDoc] = useState<any>(null);
   const [feedback, setFeedback] = useState<string>('');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch all employees
-        const result = await dispatch(getAllEmployeesThunk()).unwrap();
+        // Fetch all employee users
+        const result: EmployeeUser[] = await dispatch(getAllEmployeeUsers({})).unwrap();
 
-        const { allEmployees } = result;
+        const allEmployees: EmployeeUser[] = result;
 
         if (!allEmployees || allEmployees.length === 0) {
           message.info('No employees found.');
@@ -113,32 +152,10 @@ const VISAStatusReviewPage: React.FC = () => {
         }
         console.log('Fetched Employees:', allEmployees);
 
-        // After fetching employees, fetch their applications
-        const fetchApplicationsPromises = allEmployees.map(async (employee: any) => {
-          try {
-            const appResult = await dispatch(getApplicationThunk(employee.applicationId)).unwrap();
-            return appResult; // Assuming getApplicationThunk returns an Application object
-          } catch (error: any) {
-            console.error(`Failed to fetch application for employeeId: ${employee.employeeId}`, error);
-            return null; // Or handle as needed
-          }
-        });
-
-        const fetchedApplications = await Promise.all(fetchApplicationsPromises);
-
-        // Filter out any null responses due to failed fetches and extract application data
-        const validApplications = fetchedApplications
-          .filter((appObj): appObj is { application: any } => appObj !== null)
-          .map((appObj) => appObj.application);
-
-        setAllApplications(validApplications);
-        setFilteredApplications(validApplications); // Initialize with all applications
-        console.log('Fetched Applications:', validApplications);
-
-        // Inform if some applications failed to fetch
-        if (validApplications.length < allEmployees.length) {
-          message.warning('Some applications could not be fetched.');
-        }
+        // Set applications to allEmployees
+        setAllApplications(allEmployees);
+        setFilteredApplications(allEmployees); // Initialize with all applications
+        console.log('Fetched Applications:', allEmployees);
       } catch (err: any) {
         // Handle specific errors
         if (typeof err === 'string') {
@@ -146,7 +163,7 @@ const VISAStatusReviewPage: React.FC = () => {
         } else if (err.message) {
           message.error(`Error: ${err.message}`);
         } else {
-          message.error('Failed to fetch employees or applications.');
+          message.error('Failed to fetch employee users.');
         }
       } finally {
         setLoading(false);
@@ -214,7 +231,7 @@ const VISAStatusReviewPage: React.FC = () => {
   };
 
   // Handler to open Document Approval Modal
-  const handleApproveRejectDocument = (app: any, doc: any) => {
+  const handleApproveRejectDocument = (app: EmployeeUser, doc: any) => {
     setCurrentApp(app);
     setCurrentDoc(doc);
     setFeedback('');
@@ -236,7 +253,7 @@ const VISAStatusReviewPage: React.FC = () => {
     try {
       const updatedApp = await dispatch(
         decideDocumentThunk({
-          applicationId: currentApp._id,
+          applicationId: currentApp.employeeId.applicationId._id,
           documentName: currentDoc.name,
           status: 'Approved',
         })
@@ -247,12 +264,12 @@ const VISAStatusReviewPage: React.FC = () => {
       // Update the specific application in the local state
       setAllApplications((prevApps) =>
         prevApps.map((app) =>
-          app.employeeId === updatedApp.employeeId ? updatedApp : app
+          app.employeeId.applicationId._id === updatedApp.employeeId.applicationId._id ? updatedApp : app
         )
       );
       setFilteredApplications((prevApps) =>
         prevApps.map((app) =>
-          app.employeeId === updatedApp.employeeId ? updatedApp : app
+          app.employeeId.applicationId._id === updatedApp.employeeId.applicationId._id ? updatedApp : app
         )
       );
     } catch (err: any) {
@@ -277,7 +294,7 @@ const VISAStatusReviewPage: React.FC = () => {
     try {
       const updatedApp = await dispatch(
         decideDocumentThunk({
-          applicationId: currentApp._id,
+          applicationId: currentApp.employeeId.applicationId._id,
           documentName: currentDoc.name,
           status: 'Rejected',
           feedback: feedback.trim(),
@@ -289,12 +306,12 @@ const VISAStatusReviewPage: React.FC = () => {
       // Update the specific application in the local state
       setAllApplications((prevApps) =>
         prevApps.map((app) =>
-          app.employeeId === updatedApp.employeeId ? updatedApp : app
+          app.employeeId.applicationId._id === updatedApp.employeeId.applicationId._id ? updatedApp : app
         )
       );
       setFilteredApplications((prevApps) =>
         prevApps.map((app) =>
-          app.employeeId === updatedApp.employeeId ? updatedApp : app
+          app.employeeId.applicationId._id === updatedApp.employeeId.applicationId._id ? updatedApp : app
         )
       );
     } catch (err: any) {
@@ -310,15 +327,10 @@ const VISAStatusReviewPage: React.FC = () => {
 
   // Handler for uploading I-983 form (Assuming PrototypeForm handles the upload)
   const handleI983Upload = async (data: any) => {
-    if (!currentApp || !selectedI983Document) return;
-
-    // Implement the upload logic here using the uploadFileThunk or a similar thunk
-    // Since the upload functionality is handled by PrototypeForm and its internal logic,
-    // we'll assume that upon successful upload, the document URL is updated.
-
-    // For demonstration, we'll simulate with a success message.
+    // If selectedI983Document is not defined, need to define it or remove this handler
+    // For now, assuming it's not required and removing it
+    // If needed, define a state for selectedI983Document and handle accordingly
     message.success('I-983 form uploaded successfully.');
-    setSelectedI983Document(null);
     // Refresh data by updating the specific application if necessary
   };
 
@@ -327,10 +339,10 @@ const VISAStatusReviewPage: React.FC = () => {
     {
       title: 'Name',
       key: 'name',
-      render: (_: any, app: any) => {
-        const firstName = app.firstName || '';
-        const middleName = app.middleName || '';
-        const lastName = app.lastName || '';
+      render: (_: any, app: EmployeeUser) => {
+        const firstName = app.employeeId.firstName || '';
+        const middleName = app.employeeId.middleName || '';
+        const lastName = app.employeeId.lastName || '';
         const fullName = `${firstName} ${middleName} ${lastName}`.trim();
         return fullName || 'N/A';
       },
@@ -338,8 +350,8 @@ const VISAStatusReviewPage: React.FC = () => {
     {
       title: 'Work Authorization',
       key: 'workAuthorization',
-      render: (_: any, app: any) => {
-        const wa = app.workAuthorization;
+      render: (_: any, app: EmployeeUser) => {
+        const wa = app.employeeId.applicationId.workAuthorization;
         if (!wa) return 'N/A';
 
         const visaTitle = wa.visaTitle || wa.visaType || 'N/A';
@@ -370,8 +382,8 @@ const VISAStatusReviewPage: React.FC = () => {
     {
       title: 'Next Steps',
       key: 'nextSteps',
-      render: (_: any, app: any) => {
-        const wa = app.workAuthorization;
+      render: (_: any, app: EmployeeUser) => {
+        const wa = app.employeeId.applicationId.workAuthorization;
         const nextDoc = getCurrentPendingDocument(wa?.documents);
         if (!nextDoc) {
           return 'All documents have been approved.';
@@ -383,8 +395,8 @@ const VISAStatusReviewPage: React.FC = () => {
     {
       title: 'Action',
       key: 'action',
-      render: (_: any, app: any) => {
-        const wa = app.workAuthorization;
+      render: (_: any, app: EmployeeUser) => {
+        const wa = app.employeeId.applicationId.workAuthorization;
         const pendingDoc = getCurrentPendingDocument(wa?.documents);
 
         if (!pendingDoc) return <span>No pending actions.</span>;
@@ -414,10 +426,10 @@ const VISAStatusReviewPage: React.FC = () => {
     {
       title: 'Name',
       key: 'name',
-      render: (_: any, app: any) => {
-        const firstName = app.firstName || '';
-        const middleName = app.middleName || '';
-        const lastName = app.lastName || '';
+      render: (_: any, app: EmployeeUser) => {
+        const firstName = app.employeeId.firstName || '';
+        const middleName = app.employeeId.middleName || '';
+        const lastName = app.employeeId.lastName || '';
         const fullName = `${firstName} ${middleName} ${lastName}`.trim();
         return fullName || 'N/A';
       },
@@ -425,8 +437,8 @@ const VISAStatusReviewPage: React.FC = () => {
     {
       title: 'Work Authorization',
       key: 'workAuthorization',
-      render: (_: any, app: any) => {
-        const wa = app.workAuthorization;
+      render: (_: any, app: EmployeeUser) => {
+        const wa = app.employeeId.applicationId.workAuthorization;
         if (!wa) return 'N/A';
 
         const visaTitle = wa.visaTitle || wa.visaType || 'N/A';
@@ -457,8 +469,8 @@ const VISAStatusReviewPage: React.FC = () => {
     {
       title: 'Documents',
       key: 'documents',
-      render: (_: any, app: any) => {
-        const wa = app.workAuthorization;
+      render: (_: any, app: EmployeeUser) => {
+        const wa = app.employeeId.applicationId.workAuthorization;
         if (!wa || !wa.documents) return 'No documents uploaded.';
 
         const approvedDocs = wa.documents.filter((doc: any) => doc.status === 'Approved');
@@ -468,7 +480,7 @@ const VISAStatusReviewPage: React.FC = () => {
         return (
           <div>
             {approvedDocs.map((doc: any, index: number) => (
-              <div key={`${doc.name}-${app.employeeId}-${index}`} style={{ marginBottom: '8px' }}>
+              <div key={`${doc.name}-${app.employeeId._id}-${index}`} style={{ marginBottom: '8px' }}>
                 <strong>{doc.name}</strong>{' '}
                 <Tooltip title="View Document">
                   <Button
@@ -503,7 +515,7 @@ const VISAStatusReviewPage: React.FC = () => {
       }
 
       const filtered = allApplications.filter((app) => {
-        const fullName = `${app.firstName || ''} ${app.middleName || ''} ${app.lastName || ''}`.toLowerCase();
+        const fullName = `${app.employeeId.firstName || ''} ${app.employeeId.middleName || ''} ${app.employeeId.lastName || ''}`.toLowerCase();
         return fullName.includes(value.toLowerCase());
       });
       setFilteredApplications(filtered);
@@ -520,7 +532,7 @@ const VISAStatusReviewPage: React.FC = () => {
         <Table
           columns={inProgressColumns}
           dataSource={filteredApplications}
-          rowKey={(record) => record.applicationId || record.employeeId}
+          rowKey={(record) => record.employeeId.applicationId._id || record.employeeId._id}
           loading={loading}
           pagination={{ pageSize: 10 }}
         />
@@ -545,7 +557,7 @@ const VISAStatusReviewPage: React.FC = () => {
           <Table
             columns={allColumns}
             dataSource={filteredApplications}
-            rowKey={(record) => record.applicationId || record.employeeId}
+            rowKey={(record) => record.employeeId.applicationId._id || record.employeeId._id}
             loading={loading}
             pagination={{ pageSize: 10 }}
           />
@@ -563,8 +575,8 @@ const VISAStatusReviewPage: React.FC = () => {
       <Modal
         open={isApprovalModalVisible} // Updated from 'visible' to 'open'
         title={
-          currentDoc
-            ? `Review ${currentDoc.name} for ${currentApp?.firstName || ''} ${currentApp?.lastName || ''}`
+          currentDoc && currentApp
+            ? `Review ${currentDoc.name} for ${currentApp.employeeId.firstName || ''} ${currentApp.employeeId.lastName || ''}`
             : 'Review Document'
         }
         onCancel={closeApprovalModal}
