@@ -127,6 +127,11 @@ const EmployeeProfilesPage: React.FC = () => {
       dataIndex: 'email',
       key: 'email',
     },
+    {
+      title: 'nextStep',
+      dataIndex: 'nextStep',
+      key: 'nextStep',
+    },
   ];
 
   // Helper function to mask SSN
