@@ -1,8 +1,8 @@
 import { Request, Response, RequestHandler, NextFunction } from "express";
 import User from "../models/User";
 import Employee from "../models/Employee";
-import Application from "../models/Application";
 import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
 
 interface IPayload {
   user: {
@@ -405,5 +405,35 @@ export const getEmployeeUserById: RequestHandler = async (
     res.status(200).json({ message: "User fetched successfully", user });
   } catch (error) {
     res.status(500).json({ message: "Error fetching user.", error });
+  }
+};
+
+// Send email notification to user
+export const sendNotification: RequestHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const { email, subject, text } = req.body;
+
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: subject,
+    text: text,
+  };
+  
+  try {
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ message: "Send email notification successfully"});
+   } catch (error) {
+    res.status(500).json({ message: "Error Sending email notification", error });
   }
 };
