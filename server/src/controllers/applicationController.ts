@@ -132,9 +132,9 @@ export const uploadFile: RequestHandler = async (
                 .json({ message: `Document ${fileName} section not found` });
               return;
             }
-            if (document.status !== "NeverSubmitted") {
+            if (document.status === "Approved") {
               res.status(400).json({
-                message: `Document ${fileName} is not in "NeverSubmitted" status`,
+                message: `Document ${fileName} has been approved`,
               });
               return;
             }
