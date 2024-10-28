@@ -438,7 +438,7 @@ const OnboardingPage: React.FC = () => {
           </Title>
           <PrototypeForm
             fields={getFields()}
-            onSubmit={handleSubmit(onSubmit, onError)}
+            onSubmit={() => handleSubmit(onSubmit, onError)}
             methods={methods}
           />
         </div>
@@ -451,7 +451,7 @@ const OnboardingPage: React.FC = () => {
           </Title>
           <PrototypeForm
             fields={getFields()}
-            onSubmit={handleSubmit(onSubmit, onError)}
+            onSubmit={() => handleSubmit(onSubmit, onError)}
             methods={methods}
           />
         </div>
@@ -465,7 +465,7 @@ const OnboardingPage: React.FC = () => {
           </Title>
           <PrototypeForm
             fields={getFields()}
-            onSubmit={handleSubmit(onSubmit, onError)}
+            onSubmit={() => handleSubmit(onSubmit, onError)}
             methods={methods}
           />
         </div>

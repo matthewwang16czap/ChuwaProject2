@@ -4,14 +4,14 @@ import axiosInstance from "../../api/axiosInstance";
 
 const API_URL = "/api/application";
 
-interface IDocument {
+export interface IDocument {
   name: string;
   url: string | null;
   status: "NeverSubmitted" | "Pending" | "Approved" | "Rejected";
   feedback: string;
 }
 
-interface IWorkAuthorization {
+export interface WorkAuthorization {
   visaType: "H1-B" | "L2" | "F1(CPT/OPT)" | "H4" | "Other";
   visaTitle: string;
   startDate: Date;
@@ -42,7 +42,7 @@ export interface Application {
   dateOfBirth: Date;
   gender: "Male" | "Female" | "Other";
   citizenship: "GreenCard" | "Citizen" | "WorkAuthorization";
-  workAuthorization: IWorkAuthorization;
+  workAuthorization: WorkAuthorization;
   references: {
     firstName: string;
     lastName: string;

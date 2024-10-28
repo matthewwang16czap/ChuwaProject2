@@ -71,10 +71,10 @@ export interface EmployeeUser {
           name: string;
           url: string;
           feedback: string;
-          status: string;
+          status: "NeverSubmitted" | "Pending" | "Approved" | "Rejected";
         }[];
       };
-      status: string;
+      status: "NeverSubmitted" | "Pending" | "Approved" | "Rejected";
     };
   };
   nextStep: string;

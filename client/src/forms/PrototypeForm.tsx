@@ -24,7 +24,7 @@ export interface Field<T extends FieldValues> {
 // Define the PrototypeFormProps interface
 interface PrototypeFormProps<T extends FieldValues> {
   fields: Field<T>[];
-  onSubmit: (data: T) => void;
+  onSubmit: (data: T | void) => void;
   onError?: (errors: unknown) => void; // Add onError prop
   methods: UseFormReturn<T>;
   submitButtonLabel?: string;
@@ -81,7 +81,7 @@ const PrototypeForm = <T extends FieldValues>({
                       type={field.inputType || "text"}
                       onChange={onChange}
                       onBlur={onBlur}
-                      value={value}
+                      value={JSON.stringify(value)}
                       disabled={field.disabled}
                       placeholder={field.label}
                     />
@@ -212,7 +212,7 @@ const PrototypeForm = <T extends FieldValues>({
                             uid: "-1",
                             name: "Uploaded File", // You can adjust this to display any name you want
                             status: "done" as UploadFileStatus,
-                            url: value, // Assuming `value` is the URL returned from the backend
+                            url: typeof(value) === "object" ? value.url : value , // Assuming `value` is the URL returned from the backend
                           },
                         ]
                       : [];
