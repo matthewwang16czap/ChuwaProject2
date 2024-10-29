@@ -86,7 +86,8 @@ const VISAStatusManagementPage: React.FC = () => {
   const isApplicable =
     application &&
     application.citizenship === "WorkAuthorization" &&
-    application.workAuthorization?.visaType === "F1(CPT/OPT)";
+    application.workAuthorization?.visaType === "F1(CPT/OPT)" &&
+    application.status === "Approved";
 
   // Render loading spinner if data is still loading
   if (loading || appStatus === "loading") {
