@@ -113,10 +113,12 @@ const VISAStatusManagementPage: React.FC = () => {
   // Render message if the page is not applicable to the user
   if (!isApplicable) {
     return (
-      <div className="p-5">
-        <h2 className="text-2xl font-semibold mb-4">VISA Status Management</h2>
-        <p>This page is not applicable to you.</p>
-      </div>
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+            <h2 className="text-2xl font-semibold mb-4">VISA Status Management</h2>
+            <p className="text-yellow-700">
+              This page is not applicable to you..
+            </p>
+        </div>
     );
   }
 
