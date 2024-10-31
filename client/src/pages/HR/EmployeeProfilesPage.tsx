@@ -7,6 +7,7 @@ import { RootState, AppDispatch } from '../../app/store';
 import { debounce } from 'lodash';
 import { Input, Table, Typography, Alert, Spin, Modal, Select } from 'antd';
 import EmployeeProfilePage from './EmployeeProfilePage'; // Updated to accept props
+import { SearchOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -86,7 +87,7 @@ const EmployeeProfilesPage: React.FC = () => {
       render: (_: unknown, record: EmployeeUser) => (
         <a
           onClick={() => handleNameClick(record._id)}
-          className="text-blue-500 hover:underline cursor-pointer"
+          className="text-blue-600 hover:underline cursor-pointer"
         >
           {`${record.employeeId.firstName} ${record.employeeId.lastName}`.trim()}
         </a>
@@ -98,7 +99,7 @@ const EmployeeProfilesPage: React.FC = () => {
       title: 'SSN',
       dataIndex: 'ssn',
       key: 'ssn',
-      render: (ssn: string) => maskSSN(ssn),
+      render: (_: unknown, record: EmployeeUser) => maskSSN(record.employeeId.ssn),
     },
     {
       title: 'Work Authorization Title',
@@ -123,9 +124,14 @@ const EmployeeProfilesPage: React.FC = () => {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
+      render: (_: unknown, record: EmployeeUser) => (
+        <a href={`mailto:${record.employeeId.email}`} className="text-blue-600 hover:underline">
+          {record.employeeId.email}
+        </a>
+      ),
     },
     {
-      title: 'nextStep',
+      title: 'Next Step',
       dataIndex: 'nextStep',
       key: 'nextStep',
     },
@@ -148,27 +154,27 @@ const EmployeeProfilesPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <Title level={2}>Employee Profiles</Title>
+    <div className="max-w-7xl mx-auto p-6 bg-white shadow-md rounded-md">
+      <Title level={2} className="text-center mb-6">Employee Profiles</Title>
 
-      {/* Search Bar */}
-      <div className="mb-6">
+      {/* Search and Filters */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 space-y-4 md:space-y-0">
+        {/* Search Bar */}
         <Search
           placeholder="Search by First Name, Last Name, or Preferred Name"
           value={searchQuery}
           onChange={handleSearchChange}
-          enterButton
+          enterButton={<SearchOutlined />}
           allowClear
+          className="w-full md:w-1/2"
         />
-      </div>
 
-       {/* Next Step Primary Filter */}
-       <div className="mb-4">
+        {/* Next Step Primary Filter */}
         <Select
           placeholder="Filter by Primary Next Step"
           onChange={handlePrimaryChange}
           allowClear
-          style={{ width: '100%' }}
+          className="w-full md:w-1/4"
         >
           {['Submit', 'WaitReview', 'Resubmit'].map(step => (
             <Option key={step} value={step}>
@@ -176,15 +182,13 @@ const EmployeeProfilesPage: React.FC = () => {
             </Option>
           ))}
         </Select>
-      </div>
 
-      {/* Next Step Secondary Filter */}
-      <div className="mb-4">
+        {/* Next Step Secondary Filter */}
         <Select
           placeholder="Filter by Secondary Next Step"
           onChange={handleSecondaryChange}
           allowClear
-          style={{ width: '100%' }}
+          className="w-full md:w-1/4"
         >
           {['OPTReceipt', 'OPTEAD', 'I983', 'I20'].map(step => (
             <Option key={step} value={step}>
@@ -240,6 +244,7 @@ const EmployeeProfilesPage: React.FC = () => {
           rowKey="_id"
           pagination={{ pageSize: 10 }}
           className="shadow rounded"
+          bordered
         />
       )}
 
@@ -251,6 +256,7 @@ const EmployeeProfilesPage: React.FC = () => {
         footer={null}
         width={800}
         destroyOnClose
+        styles={{ padding: '20px' }}
       >
         {selectedUserId && (
           <EmployeeProfilePage userId={selectedUserId} />

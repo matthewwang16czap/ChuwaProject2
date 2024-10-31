@@ -10,6 +10,7 @@ import {
   Tooltip,
   Spin,
   Alert,
+  Input,
 } from "antd";
 import { DownloadOutlined } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
@@ -27,6 +28,7 @@ import moment from "moment";
 
 // Define the allowed documents in order
 const allowedDocuments = ["OPTReceipt", "OPTEAD", "I-983", "I-20"];
+const { TextArea } = Input;
 
 // Refactored DocumentViewer Component
 const DocumentViewer: React.FC<{ fileUrl: string }> = ({ fileUrl }) => {
@@ -35,6 +37,7 @@ const DocumentViewer: React.FC<{ fileUrl: string }> = ({ fileUrl }) => {
     "loading"
   );
   const [error, setError] = useState<string | null>(null);
+
 
   useEffect(() => {
     const fetchDocument = async () => {
@@ -100,7 +103,9 @@ const VISAStatusReviewPage: React.FC = () => {
     useState<boolean>(false);
   const [currentApp, setCurrentApp] = useState<EmployeeUser | null>(null);
   const [currentDoc, setCurrentDoc] = useState<IDocument | null>(null);
-  const [feedback, setFeedback] = useState<string>("");
+  const [isFeedbackModalVisible, setIsFeedbackModalVisible] =
+  useState<boolean>(false);
+const [feedback, setFeedback] = useState<string>("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -247,6 +252,7 @@ const VISAStatusReviewPage: React.FC = () => {
   // Handler for rejecting a document
   const rejectDocument = async () => {
     if (!currentApp || !currentDoc) return;
+    openFeedbackModal();
     if (feedback.trim() === "") {
       message.error("Feedback is required when rejecting a document.");
       return;
@@ -271,7 +277,19 @@ const VISAStatusReviewPage: React.FC = () => {
       } else {
         message.error("Failed to approve document.");
       }
+    }finally{
+        closeFeedbackModal();
     }
+  };
+  // Handler to open Feedback Modal
+    const openFeedbackModal = () => {
+    setIsFeedbackModalVisible(true);
+  };
+  
+  // Handler to close Feedback Modal
+  const closeFeedbackModal = () => {
+    setIsFeedbackModalVisible(false);
+    setFeedback("");
   };
 
   // Table Columns for "In Progress" Tab
@@ -493,7 +511,9 @@ const VISAStatusReviewPage: React.FC = () => {
       ),
     },
   ];
-
+  const hasPendingDocuments = Object.values(getCurrentPendingDocument).some(
+    (doc) => doc.status === "Pending"
+  );
   return (
     <div style={{ padding: "20px" }}>
       <h2>VISA Status Review</h2>
@@ -539,18 +559,21 @@ const VISAStatusReviewPage: React.FC = () => {
             )}
 
             {/* Approval Actions */}
-            <div style={{ marginTop: "20px", textAlign: "right" }}>
-              <Button
-                type="primary"
-                onClick={approveDocument}
-                style={{ marginRight: "10px" }}
-              >
-                Approve
-              </Button>
-              <Button color="danger" onClick={rejectDocument}>
-                Reject
-              </Button>
-            </div>
+            {hasPendingDocuments && (
+              <div style={{ marginTop: "20px", textAlign: "right" }}>
+                <Button
+                  type="primary"
+                  onClick={approveDocument}
+                  style={{ marginRight: "10px" }}
+                >
+                  Approve
+                </Button>
+                <Button danger onClick={rejectDocument}>
+                  Reject
+                </Button>
+              </div>
+            )}
+
           </>
         )}
       </Modal>
@@ -569,6 +592,23 @@ const VISAStatusReviewPage: React.FC = () => {
           <div>No document to preview.</div>
         )}
       </Modal>
+
+      <Modal
+  open={isFeedbackModalVisible}
+  title="Provide Feedback for Rejection"
+  onCancel={closeFeedbackModal}
+  onOk={rejectDocument}
+  okText="Submit"
+  cancelText="Cancel"
+>
+  <p>Please provide feedback for the employee:</p>
+  <TextArea
+    rows={4}
+    value={feedback}
+    onChange={(e) => setFeedback(e.target.value)}
+    placeholder="Enter feedback here..."
+  />
+</Modal>
     </div>
   );
 };

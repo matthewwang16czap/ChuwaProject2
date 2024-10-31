@@ -81,7 +81,7 @@ const PrototypeForm = <T extends FieldValues>({
                       type={field.inputType || "text"}
                       onChange={onChange}
                       onBlur={onBlur}
-                      value={JSON.stringify(value)}
+                      value={value}
                       disabled={field.disabled}
                       placeholder={field.label}
                     />
